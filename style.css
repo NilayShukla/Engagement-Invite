@@ -1,0 +1,1279 @@
+/* ================================================
+   ENGAGEMENT INVITATION — STYLE & ANIMATIONS
+   Nilay & Ananya
+   ================================================ */
+
+/* ---- Custom Properties ---- */
+:root {
+  --bg-cream-loading: #F5E9CE;
+  --bg-cream-welcome: #F5E7CD;
+  --text-dark: #372A22;
+  --gold-glow: rgba(212, 175, 55, 0.08);
+
+  --font-display: 'Cormorant Garamond', 'Georgia', serif;
+  --font-body: 'Jost', 'Segoe UI', sans-serif;
+
+  /* Easing curves */
+  --ease-elegant: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-soft-overshoot: cubic-bezier(0.34, 1.25, 0.64, 1);
+  --ease-soft-bounce: cubic-bezier(0.22, 1.0, 0.36, 1);
+}
+
+/* ---- Reset ---- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-cream-loading);
+  color: var(--text-dark);
+  overflow-x: clip;
+  min-height: 100vh;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ================================================
+   LOADING SCREEN
+   ================================================ */
+
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  background: var(--bg-cream-loading);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  max-width: 412px;
+  padding: 0 40px;
+}
+
+/* -- Ganesh SVG wrapper -- */
+.ganesh-icon-wrap {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 14px;
+  opacity: 0;
+  transform: scale(0.95);
+  will-change: opacity, transform;
+}
+
+.ganesh-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Ganesha vector paths - styled for outline drawing + staggered solid fill */
+.ganesh-svg path {
+  stroke: var(--text-dark);
+  stroke-width: 2.2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: rgba(55, 42, 34, 0); /* Start transparent */
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  will-change: stroke-dashoffset, fill;
+}
+
+/* -- Hindi Text -- */
+.ganesh-text {
+  height: 28px;
+  width: auto;
+  margin-bottom: 18px;
+  opacity: 0;
+  transform: translateY(25px);
+  will-change: opacity, transform;
+}
+
+/* -- Flowers Row -- */
+.loading-flowers {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.flower {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  opacity: 0;
+  transform: scale(0.3);
+  will-change: opacity, transform;
+}
+
+/* -- Loading Screen Fade Out -- */
+.loading-screen.fade-out {
+  animation: screenFadeOut 700ms var(--ease-elegant) forwards;
+}
+
+
+/* ---- Loading Animations (staggered transitions) ---- */
+
+.loading-screen.animate .ganesh-icon-wrap {
+  animation: ganeshEntrance 1400ms var(--ease-soft-bounce) forwards;
+}
+
+/* Staggered stroke drawing animations */
+.loading-screen.animate .ganesh-svg path {
+  animation: drawStroke 1400ms cubic-bezier(0.4, 0, 0.2, 1) forwards,
+             fillGanesha 600ms var(--ease-elegant) forwards;
+}
+
+/* Stagger the delays of the stroke drawing so paths draw from their points sequentially! */
+.loading-screen.animate .ganesh-svg path:nth-child(1)  { animation-delay: 0ms, 1200ms; }
+.loading-screen.animate .ganesh-svg path:nth-child(2)  { animation-delay: 80ms, 1200ms; }
+.loading-screen.animate .ganesh-svg path:nth-child(3)  { animation-delay: 160ms, 1200ms; }
+.loading-screen.animate .ganesh-svg path:nth-child(4)  { animation-delay: 240ms, 1200ms; }
+.loading-screen.animate .ganesh-svg path:nth-child(5)  { animation-delay: 320ms, 1200ms; }
+.loading-screen.animate .ganesh-svg path:nth-child(6)  { animation-delay: 400ms, 1200ms; }
+.loading-screen.animate .ganesh-svg path:nth-child(7)  { animation-delay: 480ms, 1200ms; }
+.loading-screen.animate .ganesh-svg path:nth-child(8)  { animation-delay: 560ms, 1200ms; }
+.loading-screen.animate .ganesh-svg path:nth-child(9)  { animation-delay: 640ms, 1200ms; }
+.loading-screen.animate .ganesh-svg path:nth-child(10) { animation-delay: 720ms, 1200ms; }
+
+.loading-screen.animate .ganesh-text {
+  animation: slideUpFade 800ms var(--ease-decelerate) 900ms forwards;
+}
+
+.loading-screen.animate .flower-1 {
+  animation: bloomIn 500ms var(--ease-overshoot) 1300ms forwards;
+}
+.loading-screen.animate .flower-2 {
+  animation: bloomIn 500ms var(--ease-overshoot) 1500ms forwards;
+}
+.loading-screen.animate .flower-3 {
+  animation: bloomIn 500ms var(--ease-overshoot) 1700ms forwards;
+}
+
+
+/* ================================================
+   WELCOME SCREEN
+   ================================================ */
+
+.welcome-screen {
+  min-height: 100vh;
+  background: var(--bg-cream-welcome);
+  position: relative;
+}
+
+.welcome-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 412px;
+  margin: 0 auto;
+  height: 100vh;
+  height: 100svh;
+  min-height: 640px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Fixed-height column: keep Figma sizes, let the ghat overflow the bottom */
+.welcome-content > * {
+  flex-shrink: 0;
+}
+
+/* Wraps every page in a single centred column (mobile and desktop alike) */
+.invite {
+  position: relative;
+  width: 100%;
+  max-width: 412px;
+  margin: 0 auto;
+  background: var(--bg-cream-welcome);
+}
+
+/* -- Welcome Top Decoration (Layered) --
+   Leaves extend to 330px, but content flow resumes at 190px (Figma motif top). */
+.welcome-top-decoration {
+  width: 100%;
+  height: 330px;
+  margin-bottom: -140px;
+  position: relative;
+  overflow: hidden;
+}
+
+.layer-item {
+  position: absolute;
+  will-change: transform, opacity;
+  opacity: 0;
+}
+
+.layer-top-border {
+  top: -2px;
+  left: 50%;
+  width: 842px;
+  height: 63px;
+  margin-left: -421px; /* Center mathematically */
+  z-index: 1;
+}
+
+.layer-top-floral-garland {
+  top: 61px;
+  left: 50%;
+  width: 597px;
+  height: 89px;
+  margin-left: -298.5px; /* Center mathematically */
+  z-index: 2;
+}
+
+.layer-bouquet-left {
+  top: 122px;
+  left: -33px; /* Reverted to original */
+  width: 96px;
+  height: 95px;
+  z-index: 3;
+}
+
+.layer-bouquet-right {
+  top: 117px;
+  left: 352px;
+  width: 82px;
+  height: 95px;
+  z-index: 3;
+}
+
+.layer-banana-leaf-left {
+  top: 201px;
+  left: -19px; /* Reverted to original */
+  width: 108px;
+  height: 82px;
+  z-index: 4;
+}
+
+.layer-banana-leaf-right {
+  top: 201px;
+  left: 318px;
+  width: 105.4px;
+  height: 129.4px;
+  z-index: 4;
+}
+
+.layer-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* -- Center Floral Motif (Larger + Moved Up) -- */
+.center-motif {
+  margin-top: -8px;
+  width: 70px; /* Grown from 51px */
+  height: 60px; /* Grown from 44px */
+  opacity: 0;
+  transform: scale(0) rotate(-30deg);
+  will-change: opacity, transform;
+  z-index: 5;
+  position: relative;
+}
+
+.motif-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* -- Text Area -- */
+.welcome-text-area {
+  text-align: center;
+  padding: 0 30px;
+  position: relative;
+  z-index: 6;
+  margin-top: 20px; /* Subtitle top lands at Figma y=262 */
+}
+
+.welcome-subtitle {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  letter-spacing: -0.16px;
+  line-height: 1.445;
+  color: var(--text-dark);
+  opacity: 0;
+  transform: translateY(18px);
+  will-change: opacity, transform;
+  margin-bottom: 2px;
+}
+
+.welcome-names {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 48px;
+  letter-spacing: -1.92px;
+  line-height: 1.21;
+  color: var(--text-dark);
+  opacity: 0;
+  transform: translateY(50px);
+  will-change: opacity, transform;
+  position: relative;
+}
+
+/* Subtle golden glow behind names */
+.names-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  height: 80px;
+  background: radial-gradient(ellipse at center, var(--gold-glow) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 1;
+  will-change: opacity;
+}
+
+/* -- Ghat Illustration -- */
+.welcome-ghat {
+  width: 100%;
+  position: relative;
+  margin-top: -70px; /* Ghat artwork box starts at Figma y=275 (transparent sky overlaps text) */
+  opacity: 0;
+  transform: translateY(70px);
+  will-change: opacity, transform;
+  flex-grow: 1;
+  z-index: 2;
+}
+
+.ghat-top-fade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--bg-cream-welcome), transparent);
+  z-index: 4; /* Overlay on top of all images and clouds */
+  pointer-events: none;
+}
+
+.welcome-ghat img.ghat-img {
+  /* Figma: 596px wide, 84px off the left edge of the 412px frame */
+  width: 596px;
+  max-width: none;
+  margin-left: calc(50% - 290px);
+  display: block;
+  position: relative;
+  z-index: 2; /* Sandwiched between back clouds (1) and front clouds (3) */
+}
+
+/* -- Parallax Floating Clouds -- */
+.cloud-item {
+  position: absolute;
+  left: -140px; /* Start completely off-screen on the left */
+  pointer-events: none;
+  opacity: 0.9;
+  will-change: transform;
+}
+
+.cloud-back-1 {
+  top: 174px; /* Behind the gold dome on the left */
+  width: 60px;  /* Reduced from 85px by 30% */
+  height: 31px; /* Reduced from 44px by 30% */
+  z-index: 1;   /* Render behind ghat buildings */
+  animation: driftCloud 65s linear infinite;
+  animation-delay: -10s;
+}
+
+.cloud-back-2 {
+  top: 106px; /* High in the sky, below the names and above the spires */
+  width: 82px;  /* Reduced from 117px by 30% */
+  height: 43px; /* Reduced from 61px by 30% */
+  z-index: 1;   /* Render behind background temple spires */
+  animation: driftCloud 80s linear infinite;
+  animation-delay: -35s;
+}
+
+.cloud-back-3 {
+  top: 116px; /* Mid-height sky, behind spires */
+  width: 50px;  /* Reused small cloud scaled down */
+  height: 26px;
+  z-index: 1;   /* Render behind ghat buildings */
+  animation: driftCloud 72s linear infinite;
+  animation-delay: -50s; /* Starts late-drift */
+}
+
+.cloud-front-1 {
+  top: 173px; /* In front of the main central temple building */
+  width: 85px;  /* Reduced from 121px by 30% */
+  height: 35px; /* Reduced from 50px by 30% */
+  z-index: 3;   /* Render in front of ghat buildings (higher than image z-index: 2) */
+  opacity: 0.9;
+  animation: driftCloud 55s linear infinite;
+  animation-delay: -20s;
+}
+
+.cloud-front-2 {
+  top: 152px; /* Floating in front of buildings */
+  width: 70px;  /* Reused mid cloud scaled down */
+  height: 36px;
+  z-index: 3;   /* Render in front of ghat buildings (higher than image z-index: 2) */
+  opacity: 0.85;
+  animation: driftCloud 60s linear infinite;
+  animation-delay: -30s; /* Starts mid-drift */
+}
+
+
+/* -- Scroll pill (frosted glass over the ghat) --
+   Wrapper owns position + entrance animation; the pill's opacity is driven by scroll in script.js. */
+.scroll-indicator {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20; /* Keep on top of ghat fade overlay */
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.scroll-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px 9px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  box-shadow:
+    0 4px 18px rgba(30, 20, 12, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background-color 0.25s ease, opacity 0.2s linear;
+}
+
+.scroll-pill:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.scroll-pill:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 3px;
+}
+
+.scroll-text {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.4px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.scroll-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scroll-arrow svg path {
+  stroke: #FFFFFF;
+  stroke-width: 2.5px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
+
+
+/* ---- Welcome Animations (staggered entrance + sway loops) ---- */
+
+.welcome-screen.animate .layer-top-border {
+  animation: slideDownFade 500ms var(--ease-soft-bounce) 0ms forwards;
+}
+
+/* Containers handle the ENTRANCE transitions (slide/sweep/fade) */
+.welcome-screen.animate .layer-top-floral-garland {
+  animation: slideDownFade 600ms var(--ease-soft-bounce) 100ms forwards;
+}
+
+.welcome-screen.animate .layer-bouquet-left {
+  animation: slideRightFade 550ms var(--ease-elegant) 200ms forwards;
+}
+
+.welcome-screen.animate .layer-bouquet-right {
+  animation: slideLeftFade 550ms var(--ease-elegant) 220ms forwards;
+}
+
+.welcome-screen.animate .layer-banana-leaf-left {
+  animation: sweepInLeft 800ms var(--ease-soft-overshoot) 300ms forwards;
+}
+
+.welcome-screen.animate .layer-banana-leaf-right {
+  animation: sweepInRight 800ms var(--ease-soft-overshoot) 320ms forwards;
+}
+
+.welcome-screen.animate .center-motif {
+  animation: motifBloom 500ms var(--ease-overshoot) 400ms forwards;
+}
+
+/* Inner images handle the CONTINUOUS sway loops independently (no property conflict!) */
+.welcome-screen.animate .layer-banana-leaf-left img {
+  animation: swayLeafLeft 4.8s ease-in-out 900ms infinite alternate;
+}
+
+.welcome-screen.animate .layer-banana-leaf-right img {
+  animation: swayLeafRight 5s ease-in-out 920ms infinite alternate;
+}
+
+.welcome-screen.animate .welcome-subtitle {
+  animation: slideUpFade 400ms var(--ease-decelerate) 500ms forwards;
+}
+
+.welcome-screen.animate .welcome-names {
+  animation: flyUpNames 650ms var(--ease-soft-bounce) 600ms forwards;
+}
+
+.welcome-screen.animate .names-glow {
+  animation: glowFadeIn 900ms var(--ease-elegant) 1100ms forwards;
+}
+
+.welcome-screen.animate .welcome-ghat {
+  animation: riseUpGhat 800ms var(--ease-decelerate) 800ms forwards;
+}
+
+/* Scroll indicator: dedicated entrance preserving center alignment + glimmer loop + bounce arrow */
+.welcome-screen.animate .scroll-indicator {
+  animation: scrollIndicatorEntrance 500ms var(--ease-decelerate) 1100ms forwards;
+}
+
+.welcome-screen.animate .scroll-arrow {
+  animation: bounceArrow 1.6s ease-in-out infinite;
+}
+
+
+/* ================================================
+   KEYFRAME ANIMATIONS
+   ================================================ */
+
+/* -- Loading: Ganesha wrapper zoom -- */
+@keyframes ganeshEntrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* -- Loading: Draw SVG strokes along path lines -- */
+@keyframes drawStroke {
+  0% {
+    stroke-dashoffset: 600;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* -- Loading: Fade in solid fill after drawing -- */
+@keyframes fillGanesha {
+  0% {
+    fill: rgba(55, 42, 34, 0);
+  }
+  100% {
+    fill: rgba(55, 42, 34, 1);
+  }
+}
+
+/* -- Generic: Slide up + fade in -- */
+@keyframes slideUpFade {
+  0% {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -- Scroll Indicator: Slide up + fade in (Preserves X-centering) -- */
+@keyframes scrollIndicatorEntrance {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(25px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* -- Loading: Flower bloom in -- */
+@keyframes bloomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* -- Loading: Screen fade out -- */
+@keyframes screenFadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* -- Welcome: Top elements slide down -- */
+@keyframes slideDownFade {
+  0% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -- Welcome: Bouquet Left slide right -- */
+@keyframes slideRightFade {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* -- Welcome: Bouquet Right slide left -- */
+@keyframes slideLeftFade {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* -- Welcome: Banana leaf sweep left -- */
+@keyframes sweepInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-100px) scale(0.9) rotate(-10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1) rotate(0deg);
+  }
+}
+
+/* -- Welcome: Banana leaf sweep right -- */
+@keyframes sweepInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(100px) scale(0.9) rotate(10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1) rotate(0deg);
+  }
+}
+
+/* -- Welcome: Center motif bloom + rotate -- */
+@keyframes motifBloom {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-30deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.1) rotate(5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* -- Welcome: Names fly up -- */
+@keyframes flyUpNames {
+  0% {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+  80% {
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -- Welcome: Golden glow fade in -- */
+@keyframes glowFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* -- Welcome: Ghat rise up -- */
+@keyframes riseUpGhat {
+  0% {
+    opacity: 0;
+    transform: translateY(70px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -- Scroll indicator chevron bounce -- */
+@keyframes bounceArrow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+/* ---- Loop sway animations for heritage flora ---- */
+
+@keyframes swayGarland {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+@keyframes swayBouquetLeft {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(5px, -4px) rotate(3deg); }
+}
+
+@keyframes swayBouquetRight {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-5px, -4px) rotate(-3deg); }
+}
+
+@keyframes swayLeafLeft {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-5px, 3px) rotate(-3.5deg); }
+}
+
+@keyframes swayLeafRight {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(5px, 3px) rotate(3.5deg); }
+}
+
+@keyframes floatMotif {
+  0% { transform: scale(1) translateY(0); }
+  100% { transform: scale(1.04) translateY(-6px); }
+}
+
+/* -- Parallax Cloud drift from left to right -- */
+@keyframes driftCloud {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(580px); /* Covers 412px card + 130px offset + buffer */
+  }
+}
+
+
+/* ================================================
+   DESKTOP / RESPONSIVE
+   ================================================ */
+
+/* On desktop, frame the page as a centered mobile card */
+@media (min-width: 480px) {
+  body {
+    background: #e8dbc5;
+  }
+
+  /* The whole invitation is one continuous phone-width column */
+  .invite {
+    box-shadow:
+      0 0 24px rgba(55, 42, 34, 0.12),
+      0 0 64px rgba(55, 42, 34, 0.08);
+  }
+}
+
+/* Larger phones */
+@media (min-width: 412px) and (max-width: 479px) {
+  .welcome-content {
+    max-width: 412px;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+  .welcome-names {
+    font-size: 40px;
+    letter-spacing: -1.6px;
+  }
+
+  .ganesh-icon-wrap {
+    width: 64px;
+    height: 64px;
+  }
+
+  .ganesh-text {
+    height: 25px;
+  }
+
+  .flower {
+    width: 34px;
+    height: 34px;
+  }
+
+  .center-motif {
+    width: 55px;
+    height: 48px;
+  }
+}
+
+
+/* ================================================
+   INVITATION DETAILS — Figma 21:67 (arch) + 23:189 (venue)
+   Positions are taken 1:1 from the 412px Figma frames.
+   ================================================ */
+
+:root {
+  --ink-blue: #0D4C9E;
+  --bg-cream-venue: #F5E7CD;
+}
+
+.welcome-screen {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Welcome recedes and dims as the date page opens over it (--cover set in script.js) */
+.welcome-screen .welcome-content {
+  transform: scale(calc(1 - var(--cover, 0) * 0.06));
+  transform-origin: 50% 40%;
+}
+
+.welcome-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #2A1D14;
+  opacity: calc(var(--cover, 0) * 0.45);
+  pointer-events: none;
+  z-index: 30;
+}
+
+.details-screen {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 412px;
+  margin: 0 auto;
+  /* Transparent so the welcome page shows through while the arch "door" opens */
+  background: transparent;
+  overflow: hidden;
+}
+
+/* -- Arch card: fixed 412 x 800 stage, centred and clipped on narrow phones --
+   --p (0 → 1) is driven by scroll in script.js: the arch opens from a narrow
+   temple-door window into the full page as it slides up over the welcome screen. */
+.details-arch {
+  --p: 1;
+  --q: calc(1 - var(--p));
+  position: relative;
+  height: 800px;
+  overflow: hidden;
+  clip-path: inset(
+    calc(var(--q) * 24%) calc(var(--q) * 40%) 0
+    round calc(var(--q) * 206px) calc(var(--q) * 206px) 0 0
+  );
+}
+
+.details-stage {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 412px;
+  height: 800px;
+  margin-left: -206px;
+}
+
+.details-stage > * {
+  position: absolute;
+}
+
+.arch-bg {
+  left: -172px;
+  top: -23px;
+  width: 755px;
+  max-width: none;
+  height: 940px;
+  /* Starts zoomed in and settles as the arch opens */
+  transform: scale(calc(1 + var(--q) * 0.22));
+  transform-origin: 50% 55%;
+}
+
+.arch-leaf {
+  max-width: none;
+  z-index: 1;
+}
+
+.arch-leaf-left {
+  left: -57px;
+  top: 261px;
+  width: 164.5px;
+  height: 212.5px;
+}
+
+.arch-leaf-right {
+  left: 327px;
+  top: 262px;
+  width: 158.5px;
+  height: 186px;
+}
+
+/* Header: swastika + mantra */
+.details-mantra {
+  top: 171px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+}
+
+.swastika-svg {
+  width: 40px;
+  height: 40px;
+}
+
+.mantra-text {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 23.12px;
+  color: #000;
+}
+
+/* Blessing copy */
+.blessing {
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 23.12px;
+  letter-spacing: -0.16px;
+  color: var(--text-dark);
+}
+
+.blessing-1 { top: 269px; }
+.blessing-2 { top: 332px; }
+
+/* Couple names with faint ampersand */
+.couple-names {
+  top: 406px;
+  left: 99px;
+  width: 224px;
+  height: 85px;
+  font-weight: 700;
+}
+
+.ampersand-svg {
+  position: absolute;
+  left: 88px;
+  top: 0;
+  width: 56px;
+  height: 56px;
+}
+
+.couple-name {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: 48px;
+  line-height: 58.128px;
+  letter-spacing: -1.44px;
+  color: var(--ink-blue);
+  white-space: nowrap;
+}
+
+.couple-name-first  { left: 0;    top: 3px; }
+.couple-name-second { left: 84px; top: 27px; }
+
+/* "— on —" divider */
+.date-divider {
+  top: 503px;
+  left: 92px;
+  width: 237px;
+  height: 23px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.divider-rule {
+  flex: 1;
+  height: 0.5px;
+  background: var(--text-dark);
+  opacity: 0.5;
+}
+
+.divider-text {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 23.12px;
+  letter-spacing: -0.16px;
+  color: var(--text-dark);
+  opacity: 0.5;
+}
+
+/* Date */
+.date-block {
+  top: 538px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--ink-blue);
+}
+
+.date-day {
+  font-size: 24px;
+  line-height: 29.064px;
+  letter-spacing: -0.72px;
+  margin-bottom: 3px;
+}
+
+.date-main {
+  font-size: 34px;
+  line-height: 41.174px;
+  letter-spacing: -1.02px;
+}
+
+.couple-illustration {
+  left: 153px;
+  top: 621px;
+  width: 107px;
+  height: 151px;
+}
+
+/* -- Venue + map (continues below the arch band) -- */
+.venue-section {
+  background: var(--bg-cream-venue);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 32.5px 56px;
+  text-align: center;
+}
+
+.venue-label {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 23.12px;
+  letter-spacing: -0.16px;
+  color: var(--text-dark);
+  opacity: 0.5;
+}
+
+.venue-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 33.908px;
+  letter-spacing: -0.84px;
+  color: var(--ink-blue);
+}
+
+.venue-map {
+  display: block;
+  margin-top: 16px;
+  width: 100%;
+  max-width: 347px;
+  aspect-ratio: 347 / 242;
+  border-radius: 6px;
+  overflow: hidden;
+  /* Static snapshot as a placeholder until the live map paints over it */
+  background: #E8E2D6 url('assets/venue_map.jpg') center / cover no-repeat;
+}
+
+.venue-map iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* "Open in Maps" button — Figma 23:151 */
+.maps-button {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 8px;
+  background: #FFFFFF;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 23.12px;
+  letter-spacing: -0.16px;
+  color: var(--text-dark);
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.maps-button:hover { opacity: 0.85; }
+
+.maps-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.maps-button:focus-visible {
+  outline: 2px solid var(--ink-blue);
+  outline-offset: 3px;
+}
+
+/* -- Venue scroll reveal -- */
+.reveal {
+  opacity: 0;
+  translate: 0 24px;
+  transition: opacity 700ms var(--ease-decelerate), translate 700ms var(--ease-soft-bounce);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* -- Date page reveal choreography --
+   .is-opening (arch mostly open) brings in the leaves; .is-revealed (page settled
+   in place) then plays the remaining .arch-step items in order of --i. */
+.arch-step {
+  opacity: 0;
+  translate: 0 18px;
+  /* Keep each item on one stable compositor layer for its whole life. Without this
+     the browser drops the animation layer when the transition ends and re-rasterises
+     the text, which shows as a small jitter/snap as it settles. (No blur filter on
+     text for the same reason.) */
+  will-change: opacity, translate;
+  backface-visibility: hidden;
+  transition:
+    opacity 450ms var(--ease-decelerate),
+    translate 550ms var(--ease-soft-bounce),
+    rotate 650ms var(--ease-soft-bounce),
+    scale 550ms var(--ease-soft-overshoot),
+    letter-spacing 700ms var(--ease-decelerate);
+  transition-delay: 0ms;
+}
+
+.arch-step[data-anim="leaf-left"]  { translate: -80px 30px; rotate: -16deg; transform-origin: 0% 100%; }
+.arch-step[data-anim="leaf-right"] { translate: 80px 30px;  rotate: 16deg;  transform-origin: 100% 100%; }
+.arch-step[data-anim="bloom"]      { translate: 0 0; scale: 0.5; }
+.arch-step[data-anim="from-left"]  { translate: -48px 0; }
+.arch-step[data-anim="from-right"] { translate: 48px 0; }
+.arch-step[data-anim="rise"]       { translate: 0 48px; scale: 0.9; transform-origin: 50% 100%; }
+.arch-step[data-anim="date"]       { letter-spacing: 8px; }
+.arch-step[data-anim="draw"]       { translate: 0 0; }
+
+/* Divider rules draw outward from the word "on" */
+.date-divider .divider-rule {
+  scale: 0 1;
+  transition: scale 550ms var(--ease-decelerate);
+  transition-delay: inherit;
+}
+.date-divider .divider-rule:first-child { transform-origin: 100% 50%; }
+.date-divider .divider-rule:last-child  { transform-origin: 0% 50%; }
+
+/* Stage 1 — leaves sweep in while the arch is still opening (.is-opening) */
+.details-arch.is-opening .arch-leaf {
+  opacity: 1;
+  translate: 0 0;
+  rotate: 0deg;
+  transition-delay: 0ms;
+}
+
+/* Stage 2 — text plays once the page has settled in place (.is-revealed) */
+.details-arch.is-revealed .arch-step:not(.arch-leaf) {
+  opacity: 1;
+  translate: 0 0;
+  rotate: 0deg;
+  scale: 1;
+  transition-delay: calc((var(--i) - 1) * 70ms + 60ms);
+}
+
+.details-arch.is-revealed .date-main { letter-spacing: -1.02px; }
+.details-arch.is-revealed .date-divider .divider-rule { scale: 1 1; }
+
+/* Leaves keep swaying gently once they have swept in */
+.details-arch.is-opening .arch-leaf-left  { animation: swayLeafLeft 5s ease-in-out 1.2s infinite alternate; }
+.details-arch.is-opening .arch-leaf-right { animation: swayLeafRight 5.4s ease-in-out 1.2s infinite alternate; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .arch-step,
+  .date-divider .divider-rule {
+    opacity: 1;
+    translate: none;
+    rotate: none;
+    scale: none;
+    filter: none;
+    transition: none;
+  }
+  .details-arch { clip-path: none; }
+  .arch-bg { transform: none; }
+}

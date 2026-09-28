@@ -1,0 +1,7 @@
+# Secrets — Figma personal access token lives here
+.env
+
+# Local tooling / design scratch (Figma exports, backups, preview config)
+.figma/
+.claude/
+node_modules/
