@@ -7,8 +7,8 @@
 :root {
   /* Extra hero height that sits behind iOS Safari's floating bottom toolbar (0 elsewhere) */
   --hero-bleed: 0px;
-  --bg-cream-loading: #F5E9CE;
-  --bg-cream-welcome: #F5E7CD;
+  --bg-cream-loading: #F7EDD8;
+  --bg-cream-welcome: #F7ECD7;
   --text-dark: #372A22;
   --gold-glow: rgba(212, 175, 55, 0.08);
 
@@ -195,7 +195,9 @@ img {
 
 .welcome-screen {
   min-height: calc(100vh + var(--hero-bleed));
-  background: var(--bg-cream-welcome);
+  /* No background here on purpose: iOS 26 Safari paints the background colour of
+     a sticky/fixed element touching the screen edge as a solid fill behind its
+     toolbars, which hid the ghat. The cream comes from .invite underneath. */
   position: relative;
 }
 
@@ -849,7 +851,7 @@ img {
 /* On desktop, frame the page as a centered mobile card */
 @media (min-width: 480px) {
   body {
-    background: #e8dbc5;
+    background: #EDE2D1;
   }
 
   /* The whole invitation is one continuous phone-width column */
@@ -902,7 +904,7 @@ img {
 
 :root {
   --ink-blue: #0D4C9E;
-  --bg-cream-venue: #F5E7CD;
+  --bg-cream-venue: #F7ECD7;
 }
 
 .welcome-screen {
@@ -921,8 +923,9 @@ img {
   content: '';
   position: absolute;
   inset: 0;
-  background: #2A1D14;
-  opacity: calc(var(--cover, 0) * 0.45);
+  /* Alpha in the colour itself (not opacity) so at rest this is truly
+     transparent and never picked up by Safari's edge colour extension */
+  background: rgba(42, 29, 20, calc(var(--cover, 0) * 0.45));
   pointer-events: none;
   z-index: 30;
 }
