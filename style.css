@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28x"; }
+:root { --build: "2026-09-28y"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -968,19 +968,23 @@ html.scroll-lock body {
 }
 
 /* The pill hops once as soon as it has arrived, then again every 5s. On the
-   pill's own `translate`, so it layers with the wrapper's entrance transform. */
+   pill's own `translate` and `scale`, so it layers with the wrapper's entrance transform. */
 .welcome-screen.animate .scroll-pill {
+  transform-origin: 50% 100%; /* squash against the "ground" */
   animation: pillBounce 5s linear 1650ms infinite;
 }
 
-/* One ~1s bounce (up, down, a smaller rebound, settle), then rest */
+/* One elastic ~1s bounce, then rest: springs up past its peak, lands a little
+   past rest with a squash, rebounds smaller, and wobbles to a stop */
 @keyframes pillBounce {
-  0%   { translate: 0 0;     animation-timing-function: cubic-bezier(0.2, 0.6, 0.35, 1); }
-  6%   { translate: 0 -12px; animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.4); }
-  12%  { translate: 0 0;     animation-timing-function: cubic-bezier(0.2, 0.6, 0.35, 1); }
-  16%  { translate: 0 -5px;  animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.4); }
-  20%  { translate: 0 0; }
-  100% { translate: 0 0; }
+  0%   { translate: 0 0;     scale: 1 1;       animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
+  5%   { translate: 0 -14px; scale: 0.96 1.05; animation-timing-function: cubic-bezier(0.55, 0, 0.85, 0.35); }
+  9%   { translate: 0 3px;   scale: 1.07 0.92; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
+  12.5% { translate: 0 -6px; scale: 0.98 1.02; animation-timing-function: cubic-bezier(0.55, 0, 0.85, 0.35); }
+  15.5% { translate: 0 1.5px; scale: 1.03 0.97; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
+  18.5% { translate: 0 -1px; scale: 1 1;       animation-timing-function: ease-out; }
+  21%  { translate: 0 0;     scale: 1 1; }
+  100% { translate: 0 0;     scale: 1 1; }
 }
 
 
