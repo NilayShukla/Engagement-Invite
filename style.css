@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28za"; }
+:root { --build: "2026-09-28zb"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -1543,7 +1543,7 @@ html.mode-details .welcome-screen {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 22px; /* 6px gap + 16px it keeps while the text above moved up */
+  margin-top: 22px;
   height: 30px;
   padding: 0 14px 0 12px;
   border: 1px solid rgba(255, 255, 255, 0.85);
@@ -1577,7 +1577,11 @@ html.mode-details .welcome-screen {
   left: 153px;
   top: 636px;
   width: 107px;
-  height: 151px;
+  /* Full art is 151px tall; crop the feet so the couple ends on the top edge
+     of the carved border (772px) instead of overlapping it */
+  height: 136px;
+  object-fit: cover;
+  object-position: 50% 0;
 }
 
 /* -- Dress code (between the arch and the venue) --
