@@ -219,8 +219,11 @@ img {
 .welcome-top-decoration {
   width: 100%;
   height: 330px;
+  /* Top border strip removed: pull the garland (61px down in Figma) up to the very top */
+  margin-top: -61px;
   margin-bottom: -140px;
   position: relative;
+  z-index: 3; /* Leaves sit above the ghat sky fade */
   overflow: hidden;
 }
 
@@ -228,15 +231,6 @@ img {
   position: absolute;
   will-change: transform, opacity;
   opacity: 0;
-}
-
-.layer-top-border {
-  top: -2px;
-  left: 50%;
-  width: 842px;
-  height: 63px;
-  margin-left: -421px; /* Center mathematically */
-  z-index: 1;
 }
 
 .layer-top-floral-garland {
@@ -356,9 +350,15 @@ img {
 
 /* -- Ghat Illustration -- */
 .welcome-ghat {
+  /* Ghat width scales with the viewport height so the whole scene (temples, steps,
+     river) fits on screen: shrinks on short phones (e.g. iPhone Safari with its bars),
+     grows on very tall screens. Artwork starts 184px down; aspect is 1200:1493.
+     Never narrower than 420px so it always covers the 412px column. */
+  --ghat-w: max(420px, calc((100vh - 184px) * 0.8038));
+  --ghat-w: max(420px, calc((100svh - 184px) * 0.8038));
   width: 100%;
   position: relative;
-  margin-top: -70px; /* Ghat artwork box starts at Figma y=275 (transparent sky overlaps text) */
+  margin-top: -100px; /* Transparent sky at the top of the artwork overlaps the names */
   opacity: 0;
   transform: translateY(70px);
   will-change: opacity, transform;
@@ -378,13 +378,9 @@ img {
 }
 
 .welcome-ghat img.ghat-img {
-  /* Figma: 596px wide, 84px off the left edge of the 412px frame.
-     On very tall screens, grow so the artwork (which starts 275px down, aspect
-     1200:1493) always reaches the bottom of the viewport instead of leaving a band. */
-  --ghat-w: max(596px, calc((100vh - 275px) * 0.8038));
   width: var(--ghat-w);
   max-width: none;
-  margin-left: calc(50% - var(--ghat-w) / 2 + 8px);
+  margin-left: calc(50% - var(--ghat-w) / 2);
   display: block;
   position: relative;
   z-index: 2; /* Sandwiched between back clouds (1) and front clouds (3) */
@@ -400,7 +396,7 @@ img {
 }
 
 .cloud-back-1 {
-  top: 174px; /* Behind the gold dome on the left */
+  top: calc(var(--ghat-w) * 0.31); /* Behind the gold dome on the left */
   width: 60px;  /* Reduced from 85px by 30% */
   height: 31px; /* Reduced from 44px by 30% */
   z-index: 1;   /* Render behind ghat buildings */
@@ -409,7 +405,7 @@ img {
 }
 
 .cloud-back-2 {
-  top: 106px; /* High in the sky, below the names and above the spires */
+  top: calc(var(--ghat-w) * 0.245); /* High in the sky, below the names and above the spires */
   width: 82px;  /* Reduced from 117px by 30% */
   height: 43px; /* Reduced from 61px by 30% */
   z-index: 1;   /* Render behind background temple spires */
@@ -418,7 +414,7 @@ img {
 }
 
 .cloud-back-3 {
-  top: 116px; /* Mid-height sky, behind spires */
+  top: calc(var(--ghat-w) * 0.26); /* Mid-height sky, behind spires */
   width: 50px;  /* Reused small cloud scaled down */
   height: 26px;
   z-index: 1;   /* Render behind ghat buildings */
@@ -427,7 +423,7 @@ img {
 }
 
 .cloud-front-1 {
-  top: 173px; /* In front of the main central temple building */
+  top: calc(var(--ghat-w) * 0.33); /* In front of the main central temple building */
   width: 85px;  /* Reduced from 121px by 30% */
   height: 35px; /* Reduced from 50px by 30% */
   z-index: 3;   /* Render in front of ghat buildings (higher than image z-index: 2) */
@@ -437,7 +433,7 @@ img {
 }
 
 .cloud-front-2 {
-  top: 152px; /* Floating in front of buildings */
+  top: calc(var(--ghat-w) * 0.29); /* Floating in front of buildings */
   width: 70px;  /* Reused mid cloud scaled down */
   height: 36px;
   z-index: 3;   /* Render in front of ghat buildings (higher than image z-index: 2) */
@@ -509,10 +505,6 @@ img {
 
 
 /* ---- Welcome Animations (staggered entrance + sway loops) ---- */
-
-.welcome-screen.animate .layer-top-border {
-  animation: slideDownFade 500ms var(--ease-soft-bounce) 0ms forwards;
-}
 
 /* Containers handle the ENTRANCE transitions (slide/sweep/fade) */
 .welcome-screen.animate .layer-top-floral-garland {
