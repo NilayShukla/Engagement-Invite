@@ -827,6 +827,20 @@
     });
   }
 
+  // ---- Add to Calendar ----
+  // The link opens Google Calendar by default. Apple devices (iPadOS reports
+  // "Macintosh") get the .ics file instead, which Safari opens straight into
+  // the Calendar app's "Add Event" sheet.
+  function setupCalendarButton() {
+    var btn = document.getElementById('calendarBtn');
+    if (!btn) return;
+    if (/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)) {
+      btn.href = 'engagement.ics';
+      btn.removeAttribute('target');
+    }
+  }
+  setupCalendarButton();
+
   // ---- Boot ----
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

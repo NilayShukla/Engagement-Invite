@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28y"; }
+:root { --build: "2026-09-28z"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -1404,7 +1404,7 @@ html.mode-details .welcome-screen {
 
 /* Header: swastika + mantra */
 .details-mantra {
-  top: 149px;
+  top: 143px;
   left: 0;
   width: 100%;
   display: flex;
@@ -1438,12 +1438,12 @@ html.mode-details .welcome-screen {
   color: var(--text-dark);
 }
 
-.blessing-1 { top: 247px; }
-.blessing-2 { top: 310px; }
+.blessing-1 { top: 235px; }
+.blessing-2 { top: 292px; }
 
 /* Couple names with faint ampersand */
 .couple-names {
-  top: 384px;
+  top: 360px;
   left: 99px;
   width: 224px;
   height: 85px;
@@ -1473,7 +1473,7 @@ html.mode-details .welcome-screen {
 
 /* "— on —" divider */
 .date-divider {
-  top: 481px;
+  top: 453px;
   left: 92px;
   width: 237px;
   height: 23px;
@@ -1500,7 +1500,7 @@ html.mode-details .welcome-screen {
 
 /* Date */
 .date-block {
-  top: 516px;
+  top: 486px;
   left: 0;
   width: 100%;
   text-align: center;
@@ -1535,9 +1535,47 @@ html.mode-details .welcome-screen {
   color: var(--ink-blue);
 }
 
+/* "Add to Calendar": frosted-glass pill under the time, like the Scroll pill
+   but white-tinted with ink-blue text so it reads on the cream page.
+   .date-block is centred text, so an inline-flex pill centres itself. */
+.calendar-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  height: 30px;
+  padding: 0 14px 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.4);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  box-shadow:
+    0 3px 12px rgba(55, 42, 34, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  color: var(--ink-blue);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.calendar-btn:hover,
+.calendar-btn:active {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.calendar-btn:focus-visible {
+  outline: 2px solid var(--ink-blue);
+  outline-offset: 2px;
+}
+
 .couple-illustration {
   left: 153px;
-  top: 628px;
+  top: 636px;
   width: 107px;
   height: 151px;
 }

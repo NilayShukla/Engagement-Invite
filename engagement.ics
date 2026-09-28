@@ -1,0 +1,21 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//niya-forever.in//Engagement Invite//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:shubh-sagai-20261016@niya-forever.in
+DTSTAMP:20260928T000000Z
+DTSTART:20261016T043000Z
+DTEND:20261016T073000Z
+SUMMARY:Shubh Sagai · Nilay & Ananya
+LOCATION:Royal Cafe\, Hazratganj\, Lucknow\, Uttar Pradesh 226001
+DESCRIPTION:Engagement of Nilay & Ananya.\nhttps://niya-forever.in
+URL:https://niya-forever.in
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Nilay & Ananya's engagement is tomorrow
+TRIGGER:-P1D
+END:VALARM
+END:VEVENT
+END:VCALENDAR
