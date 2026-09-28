@@ -5,3 +5,6 @@
 .figma/
 .claude/
 node_modules/
+
+# Editor/atomic-write temp files
+*.tmp.*
