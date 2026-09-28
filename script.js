@@ -24,6 +24,14 @@
   const scrollPill = document.getElementById('scrollPill');
   const detailsScreen = document.getElementById('detailsScreen');
 
+  // ---- Analytics (analytics.js); stand-ins if it didn't load ----
+  function noop() {}
+  const analytics = window.inviteAnalytics || {
+    track: noop, register: noop, state: noop, currentState: noop,
+    stintMs: function () { return 0; }, detailsMode: noop, music: noop,
+    loaderDone: noop, sendLoadTiming: noop
+  };
+
   // ---- Critical images to preload ----
   const criticalImages = [
     'assets/ganesh_text.png',
@@ -43,7 +51,8 @@
   ];
 
   /**
-   * Preload all critical images and resolve when done.
+   * Preload all critical images and resolve when done
+   * (with true if the timeout fired first).
    */
   function preloadImages(srcs, timeoutMs) {
     return new Promise(function (resolve) {
@@ -51,21 +60,21 @@
       var total = srcs.length;
       var resolved = false;
 
-      function done() {
+      function done(timedOut) {
         if (!resolved) {
           resolved = true;
-          resolve();
+          resolve(!!timedOut);
         }
       }
 
-      setTimeout(done, timeoutMs || 5000);
+      setTimeout(function () { done(true); }, timeoutMs || 5000);
 
       srcs.forEach(function (src) {
         var img = new Image();
         img.onload = img.onerror = function () {
           loaded++;
           if (loaded >= total) {
-            done();
+            done(false);
           }
         };
         img.src = src;
@@ -87,12 +96,15 @@
     var doors = document.getElementById('doorIntro');
     if (doors) doors.classList.add('is-done');
     loadingScreen.classList.add('fade-out');
+    analytics.sendLoadTiming();
+    analytics.track('intro_finished', { how: 'no_intro' });
 
     setTimeout(function () {
       loadingScreen.style.display = 'none';
 
       setTimeout(function () {
         if (welcomeScreen) welcomeScreen.classList.add('animate');
+        analytics.state('hero');
         // No tap has happened on this path, so the browser may refuse: the
         // button then shows "muted" and a tap on it starts the music
         startMusic();
@@ -135,6 +147,8 @@
       loadingScreen.style.display = 'none';
       btn.classList.add('is-ready');
       btn.focus({ preventScroll: true });
+      analytics.state('doors');
+      analytics.sendLoadTiming();
     }, FADE_OUT_DURATION);
 
     // Tapping anywhere on the doors opens them too (bigger target)
@@ -144,6 +158,9 @@
   function startIntro() {
     if (introStarted) return;
     introStarted = true;
+    analytics.track('invite_opened', { wait_ms: Math.round(analytics.stintMs()) });
+    analytics.state('intro');
+    var tappedAt = performance.now();
 
     var section = document.getElementById('introVideo');
     var video = document.getElementById('introPlayer');
@@ -165,7 +182,7 @@
     if (playing && playing.catch) {
       playing.catch(function () {
         video.muted = true; // sound refused: still show the video
-        video.play().catch(function () { finishIntro(false); });
+        video.play().catch(function () { finishIntro('error'); });
       });
     }
 
@@ -186,28 +203,41 @@
       }
     });
 
-    video.addEventListener('ended', function () { finishIntro(true); });
-    video.addEventListener('error', function () { finishIntro(false); });
-    skip.addEventListener('click', function () { finishIntro(false); });
+    video.addEventListener('ended', function () { finishIntro('completed'); });
+    video.addEventListener('error', function () { finishIntro('error'); });
+    skip.addEventListener('click', function () { finishIntro('skipped'); });
 
     // Safety net: if playback never gets going (slow network), don't strand the guest
     var watchdog = setTimeout(function () {
-      if (video.currentTime < 0.2) finishIntro(false);
+      if (video.currentTime < 0.2) finishIntro('stalled');
     }, 7000);
-    video.addEventListener('playing', function () { clearTimeout(watchdog); }, { once: true });
+    video.addEventListener('playing', function () {
+      clearTimeout(watchdog);
+      analytics.track('intro_video_started', {
+        startup_ms: Math.round(performance.now() - tappedAt),
+        with_sound: !video.muted
+      });
+    }, { once: true });
   }
 
   /**
    * Hand the screen over from the video to the hero.
-   * matched = true when the video reached its last frame (so the ghat can take
-   * over pixel-for-pixel); false for Skip / errors (plain cross-fade).
+   * how = 'completed' when the video reached its last frame (so the ghat can
+   * take over pixel-for-pixel); 'skipped' / 'error' / 'stalled' cross-fade.
    */
-  function finishIntro(matched) {
+  function finishIntro(how) {
     if (introFinished) return;
     introFinished = true;
+    var matched = how === 'completed';
 
     var section = document.getElementById('introVideo');
     var video = document.getElementById('introPlayer');
+    analytics.track('intro_finished', {
+      how: how,
+      at_s: Math.round(video.currentTime * 10) / 10,
+      intro_ms: Math.round(analytics.stintMs())
+    });
+    analytics.state('hero');
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // Skip / error: a quick fade rather than cutting the sound off
@@ -262,6 +292,8 @@
   var musicToggle = document.getElementById('musicToggle');
   var musicMuted = false;
   var musicStarted = false;
+  var musicStartedAt = 0;
+  var musicBlocked = false;  // the browser refused to autoplay it
 
   try { musicMuted = localStorage.getItem(MUSIC_MUTED_KEY) === '1'; } catch (e) { /* storage blocked */ }
 
@@ -341,16 +373,25 @@
     musicToggle.classList.toggle('is-muted', off);
     musicToggle.setAttribute('aria-pressed', off ? 'true' : 'false');
     musicToggle.setAttribute('aria-label', off ? 'Play music' : 'Mute music');
+    analytics.music(!off);
   }
 
-  // Start (or resume) from silence and fade up
-  function playMusic(fadeSecs) {
+  // Start (or resume) from silence and fade up; result(true/false) says
+  // whether the browser let it play
+  function playMusic(fadeSecs, result) {
     fadeAudio(musicFader, 0, 0, null, 0);
     var p = music.play();
     if (p && p.then) {
-      p.then(function () { fadeAudio(musicFader, 1, fadeSecs, null, 0); }, renderMusicToggle); // refused: show as muted
+      p.then(function () {
+        fadeAudio(musicFader, 1, fadeSecs, null, 0);
+        if (result) result(true);
+      }, function () {
+        renderMusicToggle(); // refused: show as muted
+        if (result) result(false);
+      });
     } else {
       fadeAudio(musicFader, 1, fadeSecs, null, 0);
+      if (result) result(true);
     }
   }
 
@@ -368,10 +409,16 @@
   function startMusic() {
     if (!music || musicStarted) return;
     musicStarted = true;
+    musicStartedAt = performance.now();
     if (musicToggle) musicToggle.classList.add('is-visible');
     if (!musicMuted) {
       try { music.currentTime = 0; } catch (e) { /* not loaded yet */ }
-      playMusic(MUSIC_FADE_IN);
+      playMusic(MUSIC_FADE_IN, function (ok) {
+        musicBlocked = !ok;
+        analytics.track('music_start', { outcome: ok ? 'playing' : 'blocked' });
+      });
+    } else {
+      analytics.track('music_start', { outcome: 'muted_last_visit' });
     }
     renderMusicToggle();
   }
@@ -386,6 +433,12 @@
       musicStarted = true;
       musicMuted = !(musicMuted || music.paused);
       try { localStorage.setItem(MUSIC_MUTED_KEY, musicMuted ? '1' : '0'); } catch (e) { /* storage blocked */ }
+      analytics.track('music_toggle', {
+        to: musicMuted ? 'off' : 'on',
+        state: analytics.currentState(),
+        since_start_s: musicStartedAt ? Math.round((performance.now() - musicStartedAt) / 1000) : null,
+        was_blocked: musicBlocked
+      });
       if (musicMuted) {
         fadeAudio(musicFader, 0, MUSIC_FADE_OUT, function () { music.pause(); });
       } else {
@@ -469,6 +522,7 @@
     }
 
     video.src = introGL ? 'assets/intro_alpha.mp4' : 'assets/intro.mp4';
+    analytics.register({ intro_video: introGL ? 'alpha' : 'plain' });
     section.classList.toggle('has-alpha', !!introGL);
     video.load();
   }
@@ -569,6 +623,7 @@
     var animating = false;
     var geom = null;
     var wheelSum = 0, wheelTimer = null, lastWheelAt = 0, wheelGestureAtTop = false;
+    var turns = 0;
 
     function clamp01(v) { return Math.min(1, Math.max(0, v)); }
     function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
@@ -646,17 +701,29 @@
       lockScroll(false);
       mode = 'details';
       arch.classList.add('is-opening', 'is-revealed');
+      analytics.detailsMode(true);
     }
 
-    function forward() {
+    // method: how the guest asked for it ('swipe', 'pill', 'wheel', 'key')
+    function forward(method) {
       if (mode !== 'hero' || animating) return;
       if (root.classList.contains('scroll-lock') && !welcomeScreen.classList.contains('animate')) return; // intro still running
+      turns++;
+      analytics.track('page_turned', {
+        method: method,
+        first: turns === 1,
+        hero_ms: Math.round(analytics.stintMs())
+      });
       geom = measure();
       run(0, 1, enterDetails);
     }
 
-    function reverse() {
+    // method: 'pull', 'wheel' or 'key'
+    function reverse(method) {
       if (mode !== 'details' || animating || window.scrollY > 0) return;
+      analytics.track('page_returned', { method: method });
+      analytics.detailsMode(false);
+      analytics.state('hero');
       lockScroll(true);
       root.classList.remove('mode-details');
       geom = measure();
@@ -675,7 +742,7 @@
       if (animating) { e.preventDefault(); return; }
       if (mode === 'hero') {
         e.preventDefault();
-        if (e.deltaY > 4) forward();
+        if (e.deltaY > 4) forward('wheel');
         return;
       }
       // Date page: a deliberate upward wheel that *starts* at the very top goes
@@ -688,7 +755,7 @@
         wheelSum += -e.deltaY;
         clearTimeout(wheelTimer);
         wheelTimer = setTimeout(function () { wheelSum = 0; }, 250);
-        if (wheelSum >= 40) { wheelSum = 0; reverse(); }
+        if (wheelSum >= 40) { wheelSum = 0; reverse('wheel'); }
       }
     }, { passive: false });
 
@@ -705,13 +772,13 @@
       if (mode === 'hero') {
         if (!root.classList.contains('scroll-lock')) return;
         e.preventDefault(); // the hero never scrolls natively
-        if (!touchFired && dy < -SWIPE_TO_TURN) { touchFired = true; forward(); }
+        if (!touchFired && dy < -SWIPE_TO_TURN) { touchFired = true; forward('swipe'); }
         return;
       }
       // Date page: only a pull-down that starts at the very top goes back
       if (touchScroll0 <= 0 && window.scrollY <= 0 && dy > 0) {
         e.preventDefault(); // no rubber-band bounce
-        if (!touchFired && dy > PULL_TO_RETURN) { touchFired = true; reverse(); }
+        if (!touchFired && dy > PULL_TO_RETURN) { touchFired = true; reverse('pull'); }
       }
     }, { passive: false });
 
@@ -723,14 +790,14 @@
       }
       if (mode === 'hero' && (k === 'ArrowDown' || k === 'PageDown' || k === ' ')) {
         e.preventDefault();
-        forward();
+        forward('key');
       } else if (mode === 'details' && window.scrollY <= 0 && (k === 'ArrowUp' || k === 'PageUp')) {
         e.preventDefault();
-        reverse();
+        reverse('key');
       }
     });
 
-    if (scrollPill) scrollPill.addEventListener('click', forward);
+    if (scrollPill) scrollPill.addEventListener('click', function () { forward('pill'); });
     window.addEventListener('resize', function () {
       if (mode === 'hero' && !animating) { geom = measure(); render(0); }
     });
@@ -818,7 +885,8 @@
     initPageTurn();
     initScrollReveal();
     lockScroll(true);
-    preloadImages(criticalImages, 4000).then(function () {
+    preloadImages(criticalImages, 4000).then(function (timedOut) {
+      analytics.loaderDone(timedOut);
       setTimeout(function () {
         startLoadingAnimations();
         // Loader artwork has finished drawing by now; offer "Tap to open"
@@ -834,10 +902,14 @@
   function setupCalendarButton() {
     var btn = document.getElementById('calendarBtn');
     if (!btn) return;
-    if (/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)) {
+    var apple = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+    if (apple) {
       btn.href = 'engagement.ics';
       btn.removeAttribute('target');
     }
+    btn.addEventListener('click', function () {
+      analytics.track('calendar_clicked', { target: apple ? 'ics' : 'google' }, true);
+    });
   }
   setupCalendarButton();
 
