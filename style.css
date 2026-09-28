@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28v"; }
+:root { --build: "2026-09-28w"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -967,6 +967,22 @@ html.scroll-lock body {
   animation: bounceArrow 1.6s ease-in-out infinite;
 }
 
+/* The pill hops once as soon as it has arrived, then again every 5s. On the
+   pill's own `translate`, so it layers with the wrapper's entrance transform. */
+.welcome-screen.animate .scroll-pill {
+  animation: pillBounce 5s linear 1650ms infinite;
+}
+
+/* One ~1s bounce (up, down, a smaller rebound, settle), then rest */
+@keyframes pillBounce {
+  0%   { translate: 0 0;     animation-timing-function: cubic-bezier(0.2, 0.6, 0.35, 1); }
+  6%   { translate: 0 -12px; animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.4); }
+  12%  { translate: 0 0;     animation-timing-function: cubic-bezier(0.2, 0.6, 0.35, 1); }
+  16%  { translate: 0 -5px;  animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.4); }
+  20%  { translate: 0 0; }
+  100% { translate: 0 0; }
+}
+
 
 /* ================================================
    KEYFRAME ANIMATIONS
@@ -1856,6 +1872,7 @@ html.mode-details .welcome-screen {
   .welcome-screen.animate .layer-banana-leaf-left img,
   .welcome-screen.animate .layer-banana-leaf-right img,
   .welcome-screen.animate .motif-img,
+  .welcome-screen.animate .scroll-pill,
   .dress-leaf,
   .dress-card.is-visible .dress-flower { animation: none; }
   .dress-flower { opacity: 1; scale: none; rotate: none; transition: none; }
