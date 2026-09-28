@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28zb"; }
+:root { --build: "2026-09-28zd"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -1482,12 +1482,13 @@ html.mode-details .welcome-screen {
   gap: 11px;
 }
 
+/* Same brass rules as the Dress Code heading: fade in towards the word */
 .divider-rule {
   flex: 1;
-  height: 0.5px;
-  background: var(--text-dark);
-  opacity: 0.5;
+  height: 1px;
+  background: linear-gradient(to var(--dir, right), transparent, rgba(168, 122, 52, 0.55));
 }
+.divider-rule:last-child { --dir: left; }
 
 .divider-text {
   font-family: var(--font-body);
@@ -1779,6 +1780,23 @@ html.mode-details .welcome-screen {
   padding-bottom: calc(28px + max(env(safe-area-inset-bottom, 0px), 100lvh - 100svh));
   text-align: center;
 }
+
+/* "Venue" sits between the same brass rules as the Dress Code heading */
+.venue-heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.venue-rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to var(--dir, right), transparent, rgba(168, 122, 52, 0.55));
+}
+.venue-rule:last-child { --dir: left; }
 
 .venue-label {
   font-family: var(--font-body);
