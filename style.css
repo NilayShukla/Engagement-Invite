@@ -34,7 +34,14 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28d"; }
+:root { --build: "2026-09-28e"; }
+
+/* ?debug: page background turns cyan (the hero column keeps its cream), so any
+   strip Safari paints with the "page background" rather than content shows cyan */
+html.debug-bleed,
+html.debug-bleed body {
+  background: #00C8FF !important;
+}
 
 /* ?debug: stripe the part of the hero that should sit behind Safari's bottom bar */
 html.debug-bleed .welcome-content::after {
