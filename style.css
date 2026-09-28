@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28f"; }
+:root { --build: "2026-09-28g"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -1178,6 +1178,16 @@ html.intro-lock body {
   position: sticky;
   top: 0;
   z-index: 1;
+}
+
+/* iOS Safari 26 paints the colour of any sticky/fixed element touching the
+   screen edge as a solid band behind its floating toolbar, hiding the ghat.
+   On iOS the hero is therefore not sticky: it stays in normal flow and
+   script.js (initHeroPin) translates it by the scroll offset to keep it pinned. */
+html.js-pin .welcome-screen {
+  position: relative;
+  top: auto;
+  will-change: transform;
 }
 
 /* Welcome recedes and dims as the date page opens over it (--cover set in script.js) */

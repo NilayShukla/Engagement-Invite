@@ -33,12 +33,12 @@
     'assets/door_frame.webp',
     'assets/door_left.webp',
     'assets/door_right.webp',
-    'assets/top_floral_garland.webp?v=2026-09-28f',
-    'assets/bouquet_corner_left.png?v=2026-09-28f',
-    'assets/bouquet_corner_right.png?v=2026-09-28f',
-    'assets/banana_leaf_left.png?v=2026-09-28f',
-    'assets/banana_leaf_right.png?v=2026-09-28f',
-    'assets/center_motif.png?v=2026-09-28f',
+    'assets/top_floral_garland.webp?v=2026-09-28g',
+    'assets/bouquet_corner_left.png?v=2026-09-28g',
+    'assets/bouquet_corner_right.png?v=2026-09-28g',
+    'assets/banana_leaf_left.png?v=2026-09-28g',
+    'assets/banana_leaf_right.png?v=2026-09-28g',
+    'assets/center_motif.png?v=2026-09-28g',
     'assets/ghat_illustration.webp'
   ];
 
@@ -538,10 +538,37 @@
   }
 
   /**
+   * iOS only: pin the hero with a transform instead of position: sticky.
+   * Safari 26 extends the colour of sticky/fixed elements touching the screen
+   * edge into an opaque band behind its floating toolbar, which hid the ghat.
+   * Updated directly in the scroll handler (and on every glide frame, which
+   * scrolls programmatically) so it stays in step with the page.
+   * ?pin forces this mode on other browsers for testing.
+   */
+  function initHeroPin() {
+    var ios = window.CSS && CSS.supports('-webkit-touch-callout', 'none');
+    if (!ios && !/[?&]pin\b/.test(location.search)) return;
+    var invite = document.querySelector('.invite');
+    if (!invite || !welcomeScreen) return;
+
+    document.documentElement.classList.add('js-pin');
+
+    function pin() {
+      var max = invite.offsetHeight - welcomeScreen.offsetHeight;
+      var y = Math.min(Math.max(window.scrollY, 0), Math.max(max, 0));
+      welcomeScreen.style.transform = 'translate3d(0,' + y + 'px,0)';
+    }
+    window.addEventListener('scroll', pin, { passive: true });
+    window.addEventListener('resize', pin);
+    pin();
+  }
+
+  /**
    * Main initialization — runs after DOM is ready.
    */
   function init() {
     initDebug();
+    initHeroPin();
     initArchReveal();
     initAutoAdvance();
     initScrollReveal();
