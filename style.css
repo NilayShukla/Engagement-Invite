@@ -5,6 +5,8 @@
 
 /* ---- Custom Properties ---- */
 :root {
+  /* How far the hero artwork extends below the viewport (under Safari's bottom bar) */
+  --hero-bleed: calc(env(safe-area-inset-bottom, 0px) + 96px);
   --bg-cream-loading: #F5E9CE;
   --bg-cream-welcome: #F5E7CD;
   --text-dark: #372A22;
@@ -201,6 +203,17 @@ img {
   position: relative;
 }
 
+/* Let the ghat artwork bleed past the bottom of the hero. iOS Safari ends the
+   viewport at the top of its translucent bottom bar, so without this the bar
+   shows plain cream. The bleed sits under the next page's still-closed
+   (transparent) arch, so it only ever shows through the browser chrome. */
+@supports (overflow: clip) {
+  .welcome-content {
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+}
+
 /* Fixed-height column: keep Figma sizes, let the ghat overflow the bottom */
 .welcome-content > * {
   flex-shrink: 0;
@@ -233,20 +246,6 @@ img {
   position: absolute;
   will-change: transform, opacity;
   opacity: 0;
-}
-
-/* Ornamental strip behind the notch: transparent at the top, only its lower
-   edge shows, overlapping the top 16px of the garland. */
-.layer-top-border {
-  top: 14px;
-  left: 50%;
-  width: 842px;
-  height: 63px;
-  margin-left: -421px;
-  z-index: 3;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.35) 45%, #000 85%);
-  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.35) 45%, #000 85%);
-  pointer-events: none;
 }
 
 .layer-top-floral-garland {
@@ -372,8 +371,8 @@ img {
      river) fits on screen: shrinks on short phones (e.g. iPhone Safari with its bars),
      grows on very tall screens. Artwork starts 184px down; aspect is 1200:1493.
      Never narrower than 420px so it always covers the 412px column. */
-  --ghat-w: max(420px, calc((100vh - 184px - env(safe-area-inset-top, 0px)) * 0.8038));
-  --ghat-w: max(420px, calc((100lvh - 184px - env(safe-area-inset-top, 0px)) * 0.8038));
+  --ghat-w: max(420px, calc((100vh + var(--hero-bleed) - 184px - env(safe-area-inset-top, 0px)) * 0.8038));
+  --ghat-w: max(420px, calc((100lvh + var(--hero-bleed) - 184px - env(safe-area-inset-top, 0px)) * 0.8038));
   width: 100%;
   position: relative;
   margin-top: -100px; /* Transparent sky at the top of the artwork overlaps the names */
@@ -528,10 +527,6 @@ img {
 /* ---- Welcome Animations (staggered entrance + sway loops) ---- */
 
 /* Containers handle the ENTRANCE transitions (slide/sweep/fade) */
-.welcome-screen.animate .layer-top-border {
-  animation: slideDownFade 500ms var(--ease-soft-bounce) 0ms forwards;
-}
-
 .welcome-screen.animate .layer-top-floral-garland {
   animation: slideDownFade 600ms var(--ease-soft-bounce) 100ms forwards;
 }
