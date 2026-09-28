@@ -379,9 +379,9 @@ img {
 
 .welcome-ghat img.ghat-img {
   /* Figma: 596px wide, 84px off the left edge of the 412px frame.
-     On very tall screens, grow so the artwork (which starts 275px down, aspect
-     1200:1493) always reaches the bottom of the viewport instead of leaving a band. */
-  --ghat-w: max(596px, calc((100vh - 275px) * 0.8038));
+     On screens taller than the Figma frame, grow (keeping aspect 596:741) so the
+     river still reaches the bottom edge; the sides crop evenly. */
+  --ghat-w: max(596px, calc((100svh - 275px) * 0.8043));
   width: var(--ghat-w);
   max-width: none;
   margin-left: calc(50% - var(--ghat-w) / 2 + 8px);

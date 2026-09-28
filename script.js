@@ -210,7 +210,10 @@
       if (p >= 0.6) {
         arch.classList.add('is-opening');
       }
-      if (top <= 2) {
+      // On very tall screens the page can't scroll the arch all the way to the
+      // top, so "scrolled to the bottom" also counts as settled.
+      var maxScroll = document.documentElement.scrollHeight - vh;
+      if (top <= 2 || window.scrollY >= maxScroll - 2) {
         arch.classList.add('is-revealed');
       }
       if (p <= 0.02) {
@@ -249,8 +252,11 @@
     var animating = false;
     var lastY = window.scrollY;
 
+    // Where the date page rests: arch at the viewport top, or as far as the
+    // page can scroll on screens too tall for that.
     function archTop() {
-      return arch.getBoundingClientRect().top + window.scrollY;
+      var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      return Math.min(arch.getBoundingClientRect().top + window.scrollY, maxScroll);
     }
 
     function easeInOutCubic(t) {
