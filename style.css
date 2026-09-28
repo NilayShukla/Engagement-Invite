@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28s"; }
+:root { --build: "2026-09-28u"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -1708,7 +1708,10 @@ html.mode-details .welcome-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 32.5px calc(56px + env(safe-area-inset-bottom, 0px));
+  padding: 30px 32.5px calc(28px + env(safe-area-inset-bottom, 0px));
+  /* Keep the closing band clear of Safari's bottom toolbar: (lvh - svh) is the
+     space the bars cover */
+  padding-bottom: calc(28px + max(env(safe-area-inset-bottom, 0px), 100lvh - 100svh));
   text-align: center;
 }
 
@@ -1730,16 +1733,17 @@ html.mode-details .welcome-screen {
   color: var(--ink-blue);
 }
 
+/* Map sits in a mat with a very light brown keyline */
 .venue-map {
   display: block;
   margin-top: 16px;
   width: 100%;
   max-width: 347px;
   aspect-ratio: 347 / 242;
-  border-radius: 6px;
-  overflow: hidden;
-  /* Static snapshot as a placeholder until the live map paints over it */
-  background: #E8E2D6 url('assets/venue_map.jpg') center / cover no-repeat;
+  padding: 5px;
+  border: 1px solid rgba(139, 101, 62, 0.22);
+  border-radius: 10px;
+  background: #FBF3E4;
 }
 
 .venue-map iframe {
@@ -1747,6 +1751,18 @@ html.mode-details .welcome-screen {
   width: 100%;
   height: 100%;
   border: 0;
+  border-radius: 6px;
+  /* Static snapshot as a placeholder until the live map paints over it */
+  background: #E8E2D6 url('assets/venue_map.jpg') center / cover no-repeat;
+}
+
+/* Closing band at the end of the invite (details_band.jpg is 1510x54; shown
+   at the same half scale as on the date page, centred) */
+.invite-end {
+  align-self: stretch;
+  margin: 44px -32.5px 0;
+  height: 27px;
+  background: url('assets/details_band.jpg') center / auto 27px no-repeat;
 }
 
 /* -- Venue scroll reveal -- */
