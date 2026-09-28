@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28u"; }
+:root { --build: "2026-09-28v"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -1504,12 +1504,12 @@ html.mode-details .welcome-screen {
 
 .date-time {
   margin-top: 4px;
-  font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 23.12px;
-  letter-spacing: 2px;
-  color: rgba(55, 42, 34, 0.75); /* alpha in the colour: .arch-step animates opacity */
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 28px;
+  letter-spacing: -0.4px;
+  color: var(--ink-blue);
 }
 
 .couple-illustration {
