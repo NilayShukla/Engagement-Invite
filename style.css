@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28w"; }
+:root { --build: "2026-09-28x"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -1525,6 +1525,9 @@ html.mode-details .welcome-screen {
   font-size: 24px;
   line-height: 28px;
   letter-spacing: -0.4px;
+  /* Full-height digits: Cormorant's default old-style figures sit at
+     x-height and made "10:00" look smaller than "AM" */
+  font-variant-numeric: lining-nums;
   color: var(--ink-blue);
 }
 
