@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28i"; }
+:root { --build: "2026-09-28j"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -847,6 +847,19 @@ html.scroll-lock body {
   78%      { transform: rotate(4.5deg) skewY(1.1deg); }
 }
 
+/* Centre bouquet: a very subtle rock, pivoting at its bottom centre. On the
+   inner image via `rotate`, so it layers with the wrapper's bloom-in entrance
+   and the page-turn drift (translate) without either overriding the other. */
+.welcome-screen.animate .motif-img {
+  transform-origin: 50% 100%;
+  animation: bouquetRock 4.6s ease-in-out 1200ms infinite alternate;
+}
+
+@keyframes bouquetRock {
+  from { rotate: -2.5deg; }
+  to   { rotate: 2.5deg; }
+}
+
 @keyframes heroLeafFlutter {
   from { rotate: -1deg; }
   to   { rotate: 1.2deg; }
@@ -1657,5 +1670,6 @@ html.mode-details .welcome-screen {
   .details-arch { clip-path: none; }
   .arch-bg { transform: none; }
   .welcome-screen.animate .layer-banana-leaf-left img,
-  .welcome-screen.animate .layer-banana-leaf-right img { animation: none; }
+  .welcome-screen.animate .layer-banana-leaf-right img,
+  .welcome-screen.animate .motif-img { animation: none; }
 }
