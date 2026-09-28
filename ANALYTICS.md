@@ -49,15 +49,20 @@ covers the last 24 hours and the period since launch, with day-by-day totals. Se
 funnel, time per scroll state, music split, swipe vs Scroll-button split, loading times, health
 and whether the site is up.
 
-```sh
-POSTHOG_API_KEY=phx_… POSTHOG_PROJECT_ID=12345 node tools/analytics-report.mjs --out report.md
-```
+Runs on your own computer; needs Node.js 18 or newer.
 
-- `POSTHOG_API_KEY`: a **personal** API key (PostHog → Settings → Personal API keys) with only
-  the *Query: read* scope. Keep it secret; never commit it.
-- `POSTHOG_PROJECT_ID`: the number in the project's URL.
-- `POSTHOG_HOST`: `https://eu.posthog.com` for the EU region (default US).
-- `REPORT_SINCE`: first day to count, default `2026-09-28`.
+1. In PostHog → Settings → Personal API keys, create a key with only the *Query: read* scope.
+2. Add it to the `.env` file in the project folder (git-ignored, so it's never published):
+   ```
+   POSTHOG_API_KEY=phx_...
+   ```
+3. Run it from the project folder:
+   ```sh
+   node tools/analytics-report.mjs
+   ```
+   The report prints in the terminal and is saved to `reports/<date>.md`. That folder is
+   git-ignored because reports contain guest details (cities, devices) that GitHub Pages would
+   otherwise publish.
 
-The report contains guest-level details (cities, devices), so don't commit reports to this repo.
-GitHub Pages would publish them on the site.
+Optional `.env` settings: `POSTHOG_PROJECT_ID` (default `633757`), `POSTHOG_HOST`
+(default `https://us.posthog.com`), `REPORT_SINCE` (first day to count, default `2026-09-28`).

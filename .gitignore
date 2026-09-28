@@ -1,5 +1,8 @@
-# Secrets — Figma personal access token lives here
+# Secrets — Figma token and the PostHog personal API key live here
 .env
+
+# Analytics reports: guest details, never publish
+reports/
 
 # Local tooling / design scratch (Figma exports, backups, preview config)
 .figma/

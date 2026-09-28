@@ -2,11 +2,13 @@
 /* ================================================
    ENGAGEMENT INVITATION — DAILY ANALYTICS REPORT
    Pulls the invite's events from PostHog, checks the
-   site is up, and prints a Markdown report.
+   site is up, and prints a Markdown report. Each run
+   is also saved to reports/<date>.md (git-ignored).
 
    node tools/analytics-report.mjs [--out report.md] [--fixture events.json]
 
-   Env: POSTHOG_API_KEY     personal API key with "Query: read" scope
+   Settings come from the environment or the repo's .env:
+        POSTHOG_API_KEY     personal API key with "Query: read" scope
         POSTHOG_PROJECT_ID  numeric id from the PostHog project URL
         POSTHOG_HOST        default https://us.posthog.com
         REPORT_SINCE        first day to count (IST), default 2026-09-28
@@ -14,9 +16,19 @@
 
 import fs from 'node:fs';
 
+// KEY=value lines from the repo's .env (git-ignored); real environment variables win
+const ROOT = new URL('../', import.meta.url);
+try {
+  for (const line of fs.readFileSync(new URL('.env', ROOT), 'utf8').split(/\r?\n/)) {
+    const m = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/.exec(line);
+    if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+} catch (e) { /* no .env */ }
+
 const SITE = 'https://niya-forever.in';
 const EVENT_DAY = '2026-10-16';
 const TZ = 'Asia/Kolkata';
+const PROJECT_ID = process.env.POSTHOG_PROJECT_ID || '633757';
 const SINCE = process.env.REPORT_SINCE || '2026-09-28';
 const HOST = (process.env.POSTHOG_HOST || 'https://us.posthog.com').replace(/\/$/, '');
 const ROW_LIMIT = 50000;
@@ -39,8 +51,8 @@ async function fetchRows() {
   const fixture = arg('--fixture');
   if (fixture) return JSON.parse(fs.readFileSync(fixture, 'utf8'));
 
-  const key = process.env.POSTHOG_API_KEY, project = process.env.POSTHOG_PROJECT_ID;
-  if (!key || !project) throw new Error('Set POSTHOG_API_KEY and POSTHOG_PROJECT_ID (or pass --fixture).');
+  const key = process.env.POSTHOG_API_KEY, project = PROJECT_ID;
+  if (!key) throw new Error('Add POSTHOG_API_KEY=phx_... to the .env file in the project folder (or pass --fixture).');
 
   // IST midnight of REPORT_SINCE, in UTC
   const since = new Date(SINCE + 'T00:00:00+05:30').toISOString().replace('T', ' ').slice(0, 19);
@@ -290,9 +302,14 @@ async function main() {
     daily(rows)
   ].filter(Boolean).join('\n\n') + '\n';
 
-  const out = arg('--out');
-  if (out) fs.writeFileSync(out, md);
+  const out = arg('--out') || (() => {
+    const dir = new URL('reports/', ROOT);
+    fs.mkdirSync(dir, { recursive: true });
+    return new URL(`${today}.md`, dir);
+  })();
+  fs.writeFileSync(out, md);
   process.stdout.write(md);
+  console.error(`\nSaved to ${out instanceof URL ? out.pathname : out}`);
 }
 
 main().catch(e => { console.error(e.message); process.exit(1); });
