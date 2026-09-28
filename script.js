@@ -33,12 +33,12 @@
     'assets/door_frame.webp',
     'assets/door_left.webp',
     'assets/door_right.webp',
-    'assets/top_floral_garland.webp?v=2026-09-28r',
-    'assets/bouquet_corner_left.png?v=2026-09-28r',
-    'assets/bouquet_corner_right.png?v=2026-09-28r',
-    'assets/banana_leaf_left.png?v=2026-09-28r',
-    'assets/banana_leaf_right.png?v=2026-09-28r',
-    'assets/center_motif.png?v=2026-09-28r',
+    'assets/top_floral_garland.webp?v=2026-09-28s',
+    'assets/bouquet_corner_left.png?v=2026-09-28s',
+    'assets/bouquet_corner_right.png?v=2026-09-28s',
+    'assets/banana_leaf_left.png?v=2026-09-28s',
+    'assets/banana_leaf_right.png?v=2026-09-28s',
+    'assets/center_motif.png?v=2026-09-28s',
     'assets/ghat_illustration.webp'
   ];
 
@@ -157,6 +157,7 @@
 
     section.classList.add('is-playing');
     video.muted = false;
+    ensureAudio(videoFader); // inside the tap, so iOS lets its sound be faded
 
     // play() must be called inside the tap handler for sound to be allowed
     var playing = video.play();
@@ -174,6 +175,16 @@
     var doors = document.getElementById('doorIntro');
     doors.classList.add('is-open');
     setTimeout(function () { doors.classList.add('is-done'); }, 2300);
+
+    // Sound fades away over the last moments, as the picture hands off to the hero
+    var soundFading = false;
+    video.addEventListener('timeupdate', function () {
+      var left = video.duration - video.currentTime;
+      if (!soundFading && left > 0 && left <= VIDEO_FADE_OUT) {
+        soundFading = true;
+        fadeAudio(videoFader, 0, left);
+      }
+    });
 
     video.addEventListener('ended', function () { finishIntro(true); });
     video.addEventListener('error', function () { finishIntro(false); });
@@ -199,7 +210,8 @@
     var video = document.getElementById('introPlayer');
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    if (!matched) video.pause();
+    // Skip / error: a quick fade rather than cutting the sound off
+    if (!matched) fadeAudio(videoFader, 0, VIDEO_FADE_SKIP, function () { video.pause(); });
     loadingScreen.style.display = 'none';
     window.removeEventListener('resize', layoutIntroVideo);
     welcomeScreen.classList.add('from-video');
@@ -238,62 +250,71 @@
    * iOS only lets audio play from a tap, so "Tap to open" briefly plays and
    * pauses the track (unlockMusic); after that it can start on its own when
    * the intro hands off to the hero (startMusic). The guest's mute choice is
-   * remembered for their next visit.
-   *
-   * The music always fades in (and out when muted). iOS ignores an audio
-   * element's .volume, so the track is routed through a Web Audio gain node,
-   * created inside a tap; where that isn't available, .volume is ramped instead.
+   * remembered for their next visit. It always fades in, and out when muted.
    */
   var MUSIC_MUTED_KEY = 'bgMusicMuted';
   var MUSIC_FADE_IN = 6;      // s, when the music first starts
   var MUSIC_FADE_RESUME = 2;  // s, when unmuted or back from the background
   var MUSIC_FADE_OUT = 0.5;   // s, when muted
+  var VIDEO_FADE_OUT = 1.5;   // s, intro video's sound at its end
+  var VIDEO_FADE_SKIP = 0.6;  // s, intro video's sound on Skip
   var music = document.getElementById('bgMusic');
   var musicToggle = document.getElementById('musicToggle');
   var musicMuted = false;
   var musicStarted = false;
-  var audioCtx = null, musicGain = null;
-  var fadeToken = 0, fadeFrame = 0;
 
   try { musicMuted = localStorage.getItem(MUSIC_MUTED_KEY) === '1'; } catch (e) { /* storage blocked */ }
 
-  // Must run inside a tap: that's the only time iOS lets an AudioContext start
-  function ensureMusicGraph() {
-    if (audioCtx) {
-      if (audioCtx.state !== 'running') audioCtx.resume();
-      return;
-    }
+  /**
+   * Audio fades (background music and the intro video's sound).
+   * iOS ignores .volume on media elements, so each element is routed through
+   * its own Web Audio gain node. That has to be set up inside a tap (the only
+   * time iOS lets an AudioContext start); where Web Audio isn't available,
+   * .volume is ramped instead.
+   */
+  var audioCtx = null;
+
+  function makeFader(el, startLevel) {
+    return { el: el, start: startLevel, gain: null, token: 0, frame: 0 };
+  }
+
+  var musicFader = makeFader(music, 0);
+  var videoFader = makeFader(document.getElementById('introPlayer'), 1);
+
+  function ensureAudio(fader) {
     var AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
+    if (!fader.el || !AC) return;
     try {
-      audioCtx = new AC();
-      musicGain = audioCtx.createGain();
-      musicGain.gain.value = 0;
-      audioCtx.createMediaElementSource(music).connect(musicGain);
-      musicGain.connect(audioCtx.destination);
-      audioCtx.resume();
-    } catch (e) {
-      audioCtx = null;
-      musicGain = null;
-    }
+      if (!audioCtx) {
+        // Play through the ringer/silent switch like ordinary video sound does
+        // (Web Audio is otherwise muted by it on iPhone; Safari 16.4+)
+        if (navigator.audioSession) navigator.audioSession.type = 'playback';
+        audioCtx = new AC();
+      }
+      if (audioCtx.state !== 'running') audioCtx.resume();
+      if (!fader.gain) {
+        var gain = audioCtx.createGain();
+        gain.gain.value = fader.start;
+        audioCtx.createMediaElementSource(fader.el).connect(gain);
+        gain.connect(audioCtx.destination);
+        fader.gain = gain;
+      }
+    } catch (e) { /* stay on the plain .volume route */ }
   }
 
-  function currentLevel() {
-    return musicGain ? musicGain.gain.value : music.volume;
-  }
-
-  // Fade the music to level (0–1) over secs. Fading in eases in on a squared
-  // curve, since a straight gain ramp sounds like it jumps up at the start.
-  function fadeMusic(level, secs, done, fromLevel) {
-    var token = ++fadeToken;
-    var from = fromLevel != null ? fromLevel : currentLevel();
-    cancelAnimationFrame(fadeFrame);
+  // Fade to level (0–1) over secs. Fading in eases in on a squared curve,
+  // since a straight gain ramp sounds like it jumps up at the start.
+  function fadeAudio(fader, level, secs, done, fromLevel) {
+    var token = ++fader.token;
+    var el = fader.el;
+    var from = fromLevel != null ? fromLevel : (fader.gain ? fader.gain.gain.value : el.volume);
+    cancelAnimationFrame(fader.frame);
     function shape(t) { return level > from ? t * t : 1 - (1 - t) * (1 - t); }
 
-    if (musicGain) {
+    if (fader.gain) {
       // Short linear steps along the curve (setValueCurveAtTime throws if it
       // overlaps other scheduled changes in some browsers)
-      var g = musicGain.gain, now = audioCtx.currentTime, steps = 48;
+      var g = fader.gain.gain, now = audioCtx.currentTime, steps = 48;
       g.cancelScheduledValues(now);
       g.setValueAtTime(from, now);
       if (secs > 0) {
@@ -307,11 +328,11 @@
       var t0 = performance.now();
       (function step(t) {
         var k = secs > 0 ? Math.min(1, (t - t0) / (secs * 1000)) : 1;
-        music.volume = Math.min(1, Math.max(0, from + (level - from) * shape(k)));
-        if (k < 1) fadeFrame = requestAnimationFrame(step);
+        el.volume = Math.min(1, Math.max(0, from + (level - from) * shape(k)));
+        if (k < 1) fader.frame = requestAnimationFrame(step);
       })(t0);
     }
-    if (done) setTimeout(function () { if (token === fadeToken) done(); }, secs * 1000 + 30);
+    if (done) setTimeout(function () { if (token === fader.token) done(); }, secs * 1000 + 30);
   }
 
   function renderMusicToggle() {
@@ -324,19 +345,19 @@
 
   // Start (or resume) from silence and fade up
   function playMusic(fadeSecs) {
-    fadeMusic(0, 0, null, 0);
+    fadeAudio(musicFader, 0, 0, null, 0);
     var p = music.play();
     if (p && p.then) {
-      p.then(function () { fadeMusic(1, fadeSecs, null, 0); }, renderMusicToggle); // refused: show as muted
+      p.then(function () { fadeAudio(musicFader, 1, fadeSecs, null, 0); }, renderMusicToggle); // refused: show as muted
     } else {
-      fadeMusic(1, fadeSecs, null, 0);
+      fadeAudio(musicFader, 1, fadeSecs, null, 0);
     }
   }
 
   function unlockMusic() {
     if (!music || musicMuted) return;
-    ensureMusicGraph();
-    music.volume = musicGain ? 1 : 0; // silent either way until startMusic
+    ensureAudio(musicFader);
+    music.volume = musicFader.gain ? 1 : 0; // silent either way until startMusic
     music.load();
     var p = music.play();
     if (p && p.then) {
@@ -361,12 +382,12 @@
     music.addEventListener('pause', renderMusicToggle);
 
     musicToggle.addEventListener('click', function () {
-      ensureMusicGraph(); // a tap: lets iOS start the fade-capable route
+      ensureAudio(musicFader); // a tap: lets iOS start the fade-capable route
       musicStarted = true;
       musicMuted = !(musicMuted || music.paused);
       try { localStorage.setItem(MUSIC_MUTED_KEY, musicMuted ? '1' : '0'); } catch (e) { /* storage blocked */ }
       if (musicMuted) {
-        fadeMusic(0, MUSIC_FADE_OUT, function () { music.pause(); });
+        fadeAudio(musicFader, 0, MUSIC_FADE_OUT, function () { music.pause(); });
       } else {
         playMusic(MUSIC_FADE_RESUME);
       }

@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28r"; }
+:root { --build: "2026-09-28s"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -1384,7 +1384,7 @@ html.mode-details .welcome-screen {
 
 /* Header: swastika + mantra */
 .details-mantra {
-  top: 171px;
+  top: 149px;
   left: 0;
   width: 100%;
   display: flex;
@@ -1418,12 +1418,12 @@ html.mode-details .welcome-screen {
   color: var(--text-dark);
 }
 
-.blessing-1 { top: 269px; }
-.blessing-2 { top: 332px; }
+.blessing-1 { top: 247px; }
+.blessing-2 { top: 310px; }
 
 /* Couple names with faint ampersand */
 .couple-names {
-  top: 406px;
+  top: 384px;
   left: 99px;
   width: 224px;
   height: 85px;
@@ -1453,7 +1453,7 @@ html.mode-details .welcome-screen {
 
 /* "— on —" divider */
 .date-divider {
-  top: 503px;
+  top: 481px;
   left: 92px;
   width: 237px;
   height: 23px;
@@ -1480,7 +1480,7 @@ html.mode-details .welcome-screen {
 
 /* Date */
 .date-block {
-  top: 538px;
+  top: 516px;
   left: 0;
   width: 100%;
   text-align: center;
@@ -1502,9 +1502,19 @@ html.mode-details .welcome-screen {
   letter-spacing: -1.02px;
 }
 
+.date-time {
+  margin-top: 4px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 23.12px;
+  letter-spacing: 2px;
+  color: rgba(55, 42, 34, 0.75); /* alpha in the colour: .arch-step animates opacity */
+}
+
 .couple-illustration {
   left: 153px;
-  top: 621px;
+  top: 628px;
   width: 107px;
   height: 151px;
 }
