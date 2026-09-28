@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28z"; }
+:root { --build: "2026-09-28za"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -1404,7 +1404,7 @@ html.mode-details .welcome-screen {
 
 /* Header: swastika + mantra */
 .details-mantra {
-  top: 143px;
+  top: 127px;
   left: 0;
   width: 100%;
   display: flex;
@@ -1438,12 +1438,12 @@ html.mode-details .welcome-screen {
   color: var(--text-dark);
 }
 
-.blessing-1 { top: 235px; }
-.blessing-2 { top: 292px; }
+.blessing-1 { top: 219px; }
+.blessing-2 { top: 276px; }
 
 /* Couple names with faint ampersand */
 .couple-names {
-  top: 360px;
+  top: 344px;
   left: 99px;
   width: 224px;
   height: 85px;
@@ -1473,7 +1473,7 @@ html.mode-details .welcome-screen {
 
 /* "— on —" divider */
 .date-divider {
-  top: 453px;
+  top: 437px;
   left: 92px;
   width: 237px;
   height: 23px;
@@ -1500,7 +1500,7 @@ html.mode-details .welcome-screen {
 
 /* Date */
 .date-block {
-  top: 486px;
+  top: 470px;
   left: 0;
   width: 100%;
   text-align: center;
@@ -1543,7 +1543,7 @@ html.mode-details .welcome-screen {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 22px; /* 6px gap + 16px it keeps while the text above moved up */
   height: 30px;
   padding: 0 14px 0 12px;
   border: 1px solid rgba(255, 255, 255, 0.85);
