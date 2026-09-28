@@ -5,8 +5,8 @@
 
 /* ---- Custom Properties ---- */
 :root {
-  /* How far the hero artwork extends below the viewport (under Safari's bottom bar) */
-  --hero-bleed: calc(env(safe-area-inset-bottom, 0px) + 96px);
+  /* Extra hero height that sits behind iOS Safari's floating bottom toolbar (0 elsewhere) */
+  --hero-bleed: 0px;
   --bg-cream-loading: #F5E9CE;
   --bg-cream-welcome: #F5E7CD;
   --text-dark: #372A22;
@@ -21,6 +21,16 @@
   --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-soft-overshoot: cubic-bezier(0.34, 1.25, 0.64, 1);
   --ease-soft-bounce: cubic-bezier(0.22, 1.0, 0.36, 1);
+}
+
+/* iOS Safari ends the viewport at the top of its translucent bottom toolbar
+   (~100pt above the screen edge) and shows whatever comes next in the page
+   behind it. Make the hero that much taller so the ghat continues behind it.
+   (-webkit-touch-callout is only supported by iOS WebKit.) */
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --hero-bleed: calc(env(safe-area-inset-bottom, 0px) + 120px);
+  }
 }
 
 /* ---- Reset ---- */
@@ -184,7 +194,7 @@ img {
    ================================================ */
 
 .welcome-screen {
-  min-height: 100vh;
+  min-height: calc(100vh + var(--hero-bleed));
   background: var(--bg-cream-welcome);
   position: relative;
 }
@@ -195,23 +205,12 @@ img {
   align-items: center;
   max-width: 412px;
   margin: 0 auto;
-  /* Large viewport: the hero continues underneath Safari's translucent toolbars */
-  height: 100vh;
-  height: 100lvh;
+  /* One screen tall, plus (on iOS) the strip behind Safari's bottom toolbar */
+  height: calc(100vh + var(--hero-bleed));
+  height: calc(100lvh + var(--hero-bleed));
   min-height: 640px;
   overflow: hidden;
   position: relative;
-}
-
-/* Let the ghat artwork bleed past the bottom of the hero. iOS Safari ends the
-   viewport at the top of its translucent bottom bar, so without this the bar
-   shows plain cream. The bleed sits under the next page's still-closed
-   (transparent) arch, so it only ever shows through the browser chrome. */
-@supports (overflow: clip) {
-  .welcome-content {
-    overflow-x: clip;
-    overflow-y: visible;
-  }
 }
 
 /* Fixed-height column: keep Figma sizes, let the ghat overflow the bottom */
@@ -466,8 +465,8 @@ img {
   position: absolute;
   /* Lift above the home indicator, and above Safari's toolbar: the hero is
      sized to the large viewport, so (lvh - svh) is the space the bars cover. */
-  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-  bottom: calc(24px + max(env(safe-area-inset-bottom, 0px), 100lvh - 100svh));
+  bottom: calc(24px + var(--hero-bleed) + env(safe-area-inset-bottom, 0px));
+  bottom: calc(24px + var(--hero-bleed) + max(env(safe-area-inset-bottom, 0px), 100lvh - 100svh));
   left: 50%;
   transform: translateX(-50%);
   z-index: 20; /* Keep on top of ghat fade overlay */
