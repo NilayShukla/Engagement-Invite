@@ -33,12 +33,12 @@
     'assets/door_frame.webp',
     'assets/door_left.webp',
     'assets/door_right.webp',
-    'assets/top_floral_garland.webp?v=2026-09-28g',
-    'assets/bouquet_corner_left.png?v=2026-09-28g',
-    'assets/bouquet_corner_right.png?v=2026-09-28g',
-    'assets/banana_leaf_left.png?v=2026-09-28g',
-    'assets/banana_leaf_right.png?v=2026-09-28g',
-    'assets/center_motif.png?v=2026-09-28g',
+    'assets/top_floral_garland.webp?v=2026-09-28i',
+    'assets/bouquet_corner_left.png?v=2026-09-28i',
+    'assets/bouquet_corner_right.png?v=2026-09-28i',
+    'assets/banana_leaf_left.png?v=2026-09-28i',
+    'assets/banana_leaf_right.png?v=2026-09-28i',
+    'assets/center_motif.png?v=2026-09-28i',
     'assets/ghat_illustration.webp'
   ];
 
@@ -93,8 +93,6 @@
 
       setTimeout(function () {
         if (welcomeScreen) welcomeScreen.classList.add('animate');
-        lockScroll(false);
-        initParallaxScroll();
       }, WELCOME_START_DELAY);
     }, FADE_OUT_DURATION);
   }
@@ -113,8 +111,10 @@
   var introStarted = false;
   var introFinished = false;
 
+  // Native scrolling is off during the intro and on the hero (the page turn
+  // to the date page is gesture-driven); it's only on for the details pages.
   function lockScroll(on) {
-    document.documentElement.classList.toggle('intro-lock', on);
+    document.documentElement.classList.toggle('scroll-lock', on);
   }
 
   // Loader fades away to reveal the closed doors, then "Tap to open" appears
@@ -221,8 +221,6 @@
       section.classList.add('is-done');
       video.pause();
       video.removeAttribute('src');
-      lockScroll(false);
-      initParallaxScroll();
     }, (matched ? 350 : 0) + 950);
   }
 
@@ -255,61 +253,192 @@
   }
 
   /**
-   * Multi-Layer Depth Parallax Scroll Controller
-   * 
-   * As the user scrolls down, layers in the hero section move at distinct speeds:
-   * - Top Decoration: -0.35x
-   * - Text Area: -0.55x (moves faster for depth)
-   * - Ghat Illustration: -0.20x (moves slower in background)
-   * - Scroll Indicator: fades out smoothly
+   * Page turn between the hero and the date page.
+   *
+   * Native scrolling is off on the hero. A swipe up / wheel / key / the Scroll
+   * pill plays one timed transition, so nothing fights the finger or momentum:
+   *   0.00–0.50  the ghat slides up to where the text was; text, motif and
+   *              garland drift up and fade (parallax)
+   *   0.35–1.00  the arch rises from the bottom edge and opens (--p), while
+   *              the hero dims beneath it (--cover)
+   * Then the hero is hidden and the details pages scroll natively from the
+   * top. A deliberate pull-down at the very top of the date page plays the
+   * same transition in reverse.
+   *
+   * Nothing here is position: sticky/fixed, so iOS Safari never paints a
+   * solid colour band behind its toolbar.
    */
-  function initParallaxScroll() {
-    let ticking = false;
+  var TURN_DURATION = 1700;  // ms
+  var PULL_TO_RETURN = 60;   // px of downward pull at the top of the date page
+  var SWIPE_TO_TURN = 24;    // px of upward swipe on the hero
 
-    function updateParallax() {
-      const scrollY = window.scrollY || window.pageYOffset;
+  function initPageTurn() {
+    var arch = document.getElementById('detailsArch');
+    var root = document.documentElement;
+    if (!arch || !detailsScreen || !welcomeScreen) return;
 
-      if (scrollY <= 800) {
-        // Multi-speed parallax translations
-        // Welcome screen is pinned (sticky) while the date page opens over it,
-        // so keep the drift subtle — the arch reveal supplies the depth.
-        if (topDecoration) {
-          topDecoration.style.transform = `translate3d(0, ${-0.08 * scrollY}px, 0)`;
-        }
-        var textFade = Math.max(0, 1 - scrollY / 500);
-        if (welcomeTextArea) {
-          welcomeTextArea.style.transform = `translate3d(0, ${-0.12 * scrollY}px, 0)`;
-          welcomeTextArea.style.opacity = `${textFade}`;
-        }
-        // Motif travels with the text. Its entrance keyframes own `transform`/`opacity`
-        // on the wrapper, so use the independent `translate` property + the inner image.
-        if (centerMotif) {
-          centerMotif.style.translate = `0 ${-0.12 * scrollY}px`;
-          if (centerMotifImg) centerMotifImg.style.opacity = `${textFade}`;
-        }
-        if (welcomeGhat) {
-          welcomeGhat.style.transform = `translate3d(0, ${0.04 * scrollY}px, 0)`;
-        }
-        // Fade the pill itself — the wrapper's entrance keyframes own its opacity
-        if (scrollPill) {
-          var pillFade = Math.max(0, 1 - scrollY / 120);
-          scrollPill.style.opacity = `${pillFade}`;
-          scrollPill.style.pointerEvents = pillFade < 0.1 ? 'none' : '';
-        }
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var mode = 'hero';
+    var animating = false;
+    var geom = null;
+    var wheelSum = 0, wheelTimer = null, lastWheelAt = 0, wheelGestureAtTop = false;
+
+    function clamp01(v) { return Math.min(1, Math.max(0, v)); }
+    function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+
+    // Distances are measured at the start of each turn (the hero's layout at rest)
+    function measure() {
+      var vh = window.innerHeight;
+      var ghatImg = welcomeGhat && welcomeGhat.querySelector('.ghat-img');
+      var textTop = welcomeTextArea ? welcomeTextArea.getBoundingClientRect().top : vh * 0.3;
+      var slide = 0;
+      if (ghatImg) {
+        var gr = ghatImg.getBoundingClientRect();
+        // Spires start ~24% down the artwork; bring them up to the top of the text
+        slide = Math.max(0, gr.top + gr.height * 0.24 - textTop);
       }
-
-      ticking = false;
+      return { heroH: welcomeScreen.offsetHeight, slide: slide };
     }
 
-    function onScroll() {
-      if (!ticking) {
-        requestAnimationFrame(updateParallax);
-        ticking = true;
+    // t: 0 = hero at rest, 1 = date page in place
+    function render(t) {
+      var g = ease(clamp01(t / 0.5));
+      var a = ease(clamp01((t - 0.35) / 0.65));
+
+      if (welcomeGhat) welcomeGhat.style.translate = '0 ' + (-geom.slide * g) + 'px';
+      if (welcomeTextArea) {
+        welcomeTextArea.style.translate = '0 ' + (-40 * g) + 'px';
+        welcomeTextArea.style.opacity = String(1 - g);
       }
+      if (centerMotif) {
+        centerMotif.style.translate = '0 ' + (-40 * g) + 'px';
+        if (centerMotifImg) centerMotifImg.style.opacity = String(1 - g);
+      }
+      if (topDecoration) topDecoration.style.translate = '0 ' + (-24 * g) + 'px';
+      if (scrollPill) {
+        scrollPill.style.opacity = String(clamp01(1 - t * 5));
+        scrollPill.style.pointerEvents = t > 0.05 ? 'none' : '';
+      }
+
+      // Arch: its top travels from the hero's bottom edge (the true screen bottom,
+      // behind Safari's translucent toolbar) up to the top of the screen
+      detailsScreen.style.transform = 'translate3d(0,' + (-geom.heroH * a) + 'px,0)';
+      arch.style.setProperty('--p', a.toFixed(4));
+      welcomeScreen.style.setProperty('--cover', a.toFixed(4));
+      arch.classList.toggle('is-opening', a > 0.6);
     }
 
-    window.addEventListener('scroll', onScroll, { passive: true });
-    updateParallax(); // Initial check
+    function run(from, to, done) {
+      animating = true;
+      if (reduceMotion) { render(to); animating = false; done(); return; }
+      var t0 = null;
+      function step(now) {
+        if (t0 === null) t0 = now;
+        var k = clamp01((now - t0) / TURN_DURATION);
+        render(from + (to - from) * k);
+        if (k < 1) requestAnimationFrame(step);
+        else { animating = false; done(); }
+      }
+      requestAnimationFrame(step);
+    }
+
+    function enterDetails() {
+      // Hide the hero and drop the transform in the same frame: the date page
+      // is already at the top of the screen, so nothing visibly moves.
+      root.classList.add('mode-details');
+      detailsScreen.style.transform = '';
+      window.scrollTo(0, 0);
+      lockScroll(false);
+      mode = 'details';
+      arch.classList.add('is-opening', 'is-revealed');
+    }
+
+    function forward() {
+      if (mode !== 'hero' || animating) return;
+      if (root.classList.contains('scroll-lock') && !welcomeScreen.classList.contains('animate')) return; // intro still running
+      geom = measure();
+      run(0, 1, enterDetails);
+    }
+
+    function reverse() {
+      if (mode !== 'details' || animating || window.scrollY > 0) return;
+      lockScroll(true);
+      root.classList.remove('mode-details');
+      geom = measure();
+      render(1); // same frame: hero back underneath, date page held at the top
+      arch.classList.remove('is-revealed');
+      mode = 'hero';
+      run(1, 0, function () { arch.classList.remove('is-opening'); });
+    }
+
+    // Initial state: hero showing, arch closed below the fold
+    geom = measure();
+    render(0);
+
+    // ---- Input ----
+    window.addEventListener('wheel', function (e) {
+      if (animating) { e.preventDefault(); return; }
+      if (mode === 'hero') {
+        e.preventDefault();
+        if (e.deltaY > 4) forward();
+        return;
+      }
+      // Date page: a deliberate upward wheel that *starts* at the very top goes
+      // back (momentum carried over from scrolling up through the page doesn't)
+      var now = performance.now();
+      if (now - lastWheelAt > 220) wheelGestureAtTop = window.scrollY <= 0;
+      lastWheelAt = now;
+      if (window.scrollY <= 0 && e.deltaY < 0 && wheelGestureAtTop) {
+        e.preventDefault();
+        wheelSum += -e.deltaY;
+        clearTimeout(wheelTimer);
+        wheelTimer = setTimeout(function () { wheelSum = 0; }, 250);
+        if (wheelSum >= 40) { wheelSum = 0; reverse(); }
+      }
+    }, { passive: false });
+
+    var touchY0 = 0, touchScroll0 = 0, touchFired = false;
+    window.addEventListener('touchstart', function (e) {
+      touchY0 = e.touches[0].clientY;
+      touchScroll0 = window.scrollY;
+      touchFired = false;
+    }, { passive: true });
+
+    window.addEventListener('touchmove', function (e) {
+      var dy = e.touches[0].clientY - touchY0;
+      if (animating) { e.preventDefault(); return; }
+      if (mode === 'hero') {
+        if (!root.classList.contains('scroll-lock')) return;
+        e.preventDefault(); // the hero never scrolls natively
+        if (!touchFired && dy < -SWIPE_TO_TURN) { touchFired = true; forward(); }
+        return;
+      }
+      // Date page: only a pull-down that starts at the very top goes back
+      if (touchScroll0 <= 0 && window.scrollY <= 0 && dy > 0) {
+        e.preventDefault(); // no rubber-band bounce
+        if (!touchFired && dy > PULL_TO_RETURN) { touchFired = true; reverse(); }
+      }
+    }, { passive: false });
+
+    window.addEventListener('keydown', function (e) {
+      var k = e.key;
+      if (animating && ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'Home', 'End'].indexOf(k) !== -1) {
+        e.preventDefault();
+        return;
+      }
+      if (mode === 'hero' && (k === 'ArrowDown' || k === 'PageDown' || k === ' ')) {
+        e.preventDefault();
+        forward();
+      } else if (mode === 'details' && window.scrollY <= 0 && (k === 'ArrowUp' || k === 'PageUp')) {
+        e.preventDefault();
+        reverse();
+      }
+    });
+
+    if (scrollPill) scrollPill.addEventListener('click', forward);
+    window.addEventListener('resize', function () {
+      if (mode === 'hero' && !animating) { geom = measure(); render(0); }
+    });
   }
 
   /**
@@ -333,159 +462,6 @@
     }, { threshold: 0.2, rootMargin: '0px 0px -40px 0px' });
 
     items.forEach(function (el) { observer.observe(el); });
-  }
-
-  /**
-   * Date page "temple door" reveal, tied to scroll position.
-   *
-   * p goes 0 → 1 while the arch slides up over the welcome screen:
-   * - the arch clip opens from a narrow doorway to the full page (CSS --p)
-   * - the welcome screen recedes and dims beneath it (CSS --cover)
-   * - once mostly open, the text choreography plays; it resets when the
-   *   arch has fully left the viewport so it replays on the next pass.
-   */
-  function initArchReveal() {
-    var arch = document.getElementById('detailsArch');
-    if (!arch) return;
-
-    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion) {
-      arch.classList.add('is-opening', 'is-revealed');
-      return;
-    }
-
-    var ticking = false;
-
-    function update() {
-      var vh = window.innerHeight;
-      var top = arch.getBoundingClientRect().top;
-      var p = Math.min(1, Math.max(0, (vh - top) / (vh * 0.85)));
-      var eased = p * p * (3 - 2 * p); // smoothstep
-
-      arch.style.setProperty('--p', eased.toFixed(4));
-      if (welcomeScreen) welcomeScreen.style.setProperty('--cover', eased.toFixed(4));
-
-      // Leaves sweep in with the opening arch; the text waits until the
-      // page has settled in place (arch top at the viewport top).
-      if (p >= 0.6) {
-        arch.classList.add('is-opening');
-      }
-      // On very tall screens the page can't scroll the arch all the way to the
-      // top, so "scrolled to the bottom" also counts as settled.
-      var maxScroll = document.documentElement.scrollHeight - vh;
-      if (top <= 2 || window.scrollY >= maxScroll - 2) {
-        arch.classList.add('is-revealed');
-      }
-      if (p <= 0.02) {
-        arch.classList.remove('is-opening', 'is-revealed');
-      }
-      ticking = false;
-    }
-
-    window.addEventListener('scroll', function () {
-      if (!ticking) {
-        requestAnimationFrame(update);
-        ticking = true;
-      }
-    }, { passive: true });
-    window.addEventListener('resize', update);
-    update();
-  }
-
-  /**
-   * Auto-advance between the hero and the date page.
-   *
-   * The zone between the top of the page and the arch is treated as a
-   * transition, not a resting place: once the user scrolls down past
-   * SNAP_THRESHOLD the page glides the rest of the way to the date page
-   * (completing the arch reveal); scrolling back up into the zone glides
-   * back to the hero. User input is held off while a glide is running.
-   */
-  var SNAP_THRESHOLD = 60;       // px of user scroll before auto-advancing
-  var SNAP_DURATION = 1200;      // ms
-
-  function initAutoAdvance() {
-    var arch = document.getElementById('detailsArch');
-    if (!arch) return;
-
-    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var animating = false;
-    var lastY = window.scrollY;
-
-    // Where the date page rests: arch at the viewport top, or as far as the
-    // page can scroll on screens too tall for that.
-    function archTop() {
-      var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      return Math.min(arch.getBoundingClientRect().top + window.scrollY, maxScroll);
-    }
-
-    function easeInOutCubic(t) {
-      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
-
-    function glideTo(target) {
-      var start = window.scrollY;
-      var distance = target - start;
-      if (Math.abs(distance) < 2) return;
-
-      if (reduceMotion) {
-        window.scrollTo(0, target);
-        lastY = target;
-        return;
-      }
-
-      animating = true;
-      var t0 = null;
-
-      function step(now) {
-        if (t0 === null) t0 = now;
-        var t = Math.min(1, (now - t0) / SNAP_DURATION);
-        window.scrollTo(0, start + distance * easeInOutCubic(t));
-        if (t < 1) {
-          requestAnimationFrame(step);
-        } else {
-          lastY = window.scrollY;
-          // Let trailing momentum/wheel events settle before re-arming
-          setTimeout(function () { animating = false; lastY = window.scrollY; }, 150);
-        }
-      }
-      requestAnimationFrame(step);
-    }
-
-    // Hold off wheel/touch/keys while gliding so input doesn't fight the animation
-    function block(e) {
-      if (animating) e.preventDefault();
-    }
-    window.addEventListener('wheel', block, { passive: false });
-    window.addEventListener('touchmove', block, { passive: false });
-    window.addEventListener('keydown', function (e) {
-      if (animating && ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'Home', 'End'].indexOf(e.key) !== -1) {
-        e.preventDefault();
-      }
-    });
-
-    // The "Scroll" pill on the hero glides straight to the date page
-    if (scrollPill) {
-      scrollPill.addEventListener('click', function () {
-        if (!animating) glideTo(archTop());
-      });
-    }
-
-    window.addEventListener('scroll', function () {
-      if (animating) return;
-      var y = window.scrollY;
-      var target = archTop();
-      var goingDown = y > lastY;
-      lastY = y;
-
-      if (y <= 0 || y >= target) return; // outside the transition zone
-
-      if (goingDown && y >= SNAP_THRESHOLD) {
-        glideTo(target);
-      } else if (!goingDown && y <= target - SNAP_THRESHOLD) {
-        glideTo(0);
-      }
-    }, { passive: true });
   }
 
   /**
@@ -538,39 +514,11 @@
   }
 
   /**
-   * iOS only: pin the hero with a transform instead of position: sticky.
-   * Safari 26 extends the colour of sticky/fixed elements touching the screen
-   * edge into an opaque band behind its floating toolbar, which hid the ghat.
-   * Updated directly in the scroll handler (and on every glide frame, which
-   * scrolls programmatically) so it stays in step with the page.
-   * ?pin forces this mode on other browsers for testing.
-   */
-  function initHeroPin() {
-    var ios = window.CSS && CSS.supports('-webkit-touch-callout', 'none');
-    if (!ios && !/[?&]pin\b/.test(location.search)) return;
-    var invite = document.querySelector('.invite');
-    if (!invite || !welcomeScreen) return;
-
-    document.documentElement.classList.add('js-pin');
-
-    function pin() {
-      var max = invite.offsetHeight - welcomeScreen.offsetHeight;
-      var y = Math.min(Math.max(window.scrollY, 0), Math.max(max, 0));
-      welcomeScreen.style.transform = 'translate3d(0,' + y + 'px,0)';
-    }
-    window.addEventListener('scroll', pin, { passive: true });
-    window.addEventListener('resize', pin);
-    pin();
-  }
-
-  /**
    * Main initialization — runs after DOM is ready.
    */
   function init() {
     initDebug();
-    initHeroPin();
-    initArchReveal();
-    initAutoAdvance();
+    initPageTurn();
     initScrollReveal();
     lockScroll(true);
     preloadImages(criticalImages, 4000).then(function () {

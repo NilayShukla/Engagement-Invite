@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28g"; }
+:root { --build: "2026-09-28i"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -57,7 +57,7 @@ html.debug-bleed .welcome-content::after {
 }
 
 .debug-panel {
-  position: fixed;
+  position: absolute;
   top: calc(env(safe-area-inset-top, 0px) + 8px);
   left: 8px;
   z-index: 1000;
@@ -104,11 +104,13 @@ img {
    ================================================ */
 
 .loading-screen {
-  position: fixed;
+  /* absolute, not fixed (iOS toolbar colour band); the page is locked at the top */
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: calc(100vh + var(--hero-bleed));
+  height: calc(100lvh + var(--hero-bleed));
   z-index: 100;
   background: var(--bg-cream-loading);
   display: flex;
@@ -187,9 +189,9 @@ img {
   animation: screenFadeOut 700ms var(--ease-elegant) forwards;
 }
 
-/* No scrolling while the loader / intro video is on screen */
-html.intro-lock,
-html.intro-lock body {
+/* No native scrolling during the intro and on the hero (the page turn is gesture-driven) */
+html.scroll-lock,
+html.scroll-lock body {
   overflow: hidden;
   touch-action: none;
 }
@@ -266,7 +268,9 @@ html.intro-lock body {
       The stage covers the column like the hero; layer positions are the door
       image's own coordinates (768x1376 artwork) in %. -- */
 .door-intro {
-  position: fixed;
+  /* absolute, not fixed: iOS Safari paints fixed elements' colour behind its
+     toolbar. The page is scroll-locked at the top while this shows. */
+  position: absolute;
   top: 0;
   left: 50%;
   z-index: 95; /* under the loader (100), over the intro video (90) */
@@ -343,7 +347,7 @@ html.intro-lock body {
 /* -- Intro video: same column + height as the hero, so its last frame can hand
       off to the hero ghat in place. No background (Safari edge colour extension). -- */
 .intro-video {
-  position: fixed;
+  position: absolute; /* not fixed: see .door-intro */
   top: 0;
   left: 50%;
   z-index: 90; /* under the loader (100), over the page */
@@ -362,25 +366,17 @@ html.intro-lock body {
 .intro-video.is-done    { display: none; }
 
 /* Sized and placed by script.js so the video's last frame sits exactly on the
-   hero's ghat image; the top (and, when narrower than the screen, the sides)
-   feather into the cream background. */
+   hero's ghat image; when narrower than the screen, the sides feather into
+   the cream background. */
 .intro-video video {
   position: absolute;
   display: block;
   object-fit: fill;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 64px);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 64px);
 }
 
 .intro-video.is-narrow video {
-  -webkit-mask-image:
-    linear-gradient(to bottom, transparent 0, #000 64px),
-    linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to bottom, transparent 0, #000 64px),
-    linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
-  mask-composite: intersect;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
 }
 
 .intro-skip {
@@ -820,12 +816,40 @@ html.intro-lock body {
 }
 
 /* Inner images handle the CONTINUOUS sway loops independently (no property conflict!) */
+/* Hero banana leaves move in a breeze: a slow, uneven gust pivoting at the stem
+   end (transform), plus a quick light flutter layered on top (rotate). The two
+   leaves run at different speeds so they never move in lockstep. */
 .welcome-screen.animate .layer-banana-leaf-left img {
-  animation: swayLeafLeft 4.8s ease-in-out 900ms infinite alternate;
+  transform-origin: 0% 60%;
+  animation:
+    heroLeafGustLeft 6.4s ease-in-out 900ms infinite,
+    heroLeafFlutter 1.3s ease-in-out 900ms infinite alternate;
 }
 
 .welcome-screen.animate .layer-banana-leaf-right img {
-  animation: swayLeafRight 5s ease-in-out 920ms infinite alternate;
+  transform-origin: 100% 25%;
+  animation:
+    heroLeafGustRight 7.2s ease-in-out 1200ms infinite,
+    heroLeafFlutter 1.55s ease-in-out 1000ms infinite alternate-reverse;
+}
+
+@keyframes heroLeafGustLeft {
+  0%, 100% { transform: rotate(0deg) skewY(0deg); }
+  28%      { transform: rotate(-7deg) skewY(-2deg); }
+  52%      { transform: rotate(2.5deg) skewY(0.6deg); }
+  76%      { transform: rotate(-4deg) skewY(-1deg); }
+}
+
+@keyframes heroLeafGustRight {
+  0%, 100% { transform: rotate(0deg) skewY(0deg); }
+  24%      { transform: rotate(6deg) skewY(1.6deg); }
+  50%      { transform: rotate(-2.5deg) skewY(-0.6deg); }
+  78%      { transform: rotate(4.5deg) skewY(1.1deg); }
+}
+
+@keyframes heroLeafFlutter {
+  from { rotate: -1deg; }
+  to   { rotate: 1.2deg; }
 }
 
 .welcome-screen.animate .welcome-subtitle {
@@ -1174,20 +1198,15 @@ html.intro-lock body {
   --bg-cream-venue: #F7ECD7;
 }
 
+/* The hero sits in normal flow (never sticky: see initPageTurn in script.js).
+   While the date page is up, it's hidden and the details pages scroll from the top. */
 .welcome-screen {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 1;
 }
 
-/* iOS Safari 26 paints the colour of any sticky/fixed element touching the
-   screen edge as a solid band behind its floating toolbar, hiding the ghat.
-   On iOS the hero is therefore not sticky: it stays in normal flow and
-   script.js (initHeroPin) translates it by the scroll offset to keep it pinned. */
-html.js-pin .welcome-screen {
-  position: relative;
-  top: auto;
-  will-change: transform;
+html.mode-details .welcome-screen {
+  display: none;
 }
 
 /* Welcome recedes and dims as the date page opens over it (--cover set in script.js) */
@@ -1403,6 +1422,73 @@ html.js-pin .welcome-screen {
   height: 151px;
 }
 
+/* -- Dress code (between the arch and the venue) -- */
+.dress-section {
+  background: var(--bg-cream-venue);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 32.5px 6px;
+  text-align: center;
+}
+
+.dress-label {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 23.12px;
+  letter-spacing: -0.16px;
+  color: var(--text-dark);
+  opacity: 0.5;
+}
+
+.dress-columns {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.dress-col {
+  flex: 1;
+  max-width: 150px;
+}
+
+.dress-rule {
+  width: 1px;
+  background: var(--text-dark);
+  opacity: 0.2;
+}
+
+.dress-who {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-dark);
+  opacity: 0.7;
+}
+
+.dress-title {
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 28px;
+  letter-spacing: -0.6px;
+  color: var(--ink-blue);
+}
+
+.dress-divider {
+  width: 64px;
+  height: 1px;
+  margin-top: 30px;
+  background: var(--text-dark);
+  opacity: 0.2;
+}
+
 /* -- Venue + map (continues below the arch band) -- */
 .venue-section {
   background: var(--bg-cream-venue);
@@ -1570,4 +1656,6 @@ html.js-pin .welcome-screen {
   }
   .details-arch { clip-path: none; }
   .arch-bg { transform: none; }
+  .welcome-screen.animate .layer-banana-leaf-left img,
+  .welcome-screen.animate .layer-banana-leaf-right img { animation: none; }
 }
