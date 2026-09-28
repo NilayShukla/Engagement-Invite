@@ -30,6 +30,9 @@
     'assets/flower_lily.png',
     'assets/flower_daisy.png',
     'assets/flower_rose.png',
+    'assets/door_frame.webp',
+    'assets/door_left.webp',
+    'assets/door_right.webp',
     'assets/top_floral_garland.webp',
     'assets/bouquet_corner_left.png',
     'assets/bouquet_corner_right.png',
@@ -81,6 +84,8 @@
    * Fade out the loading screen and transition to welcome.
    */
   function transitionToWelcome() {
+    var doors = document.getElementById('doorIntro');
+    if (doors) doors.classList.add('is-done');
     loadingScreen.classList.add('fade-out');
 
     setTimeout(function () {
@@ -95,7 +100,8 @@
   }
 
   /**
-   * Intro video: Ganapati loader → "Tap to open" → video (with sound) → hero.
+   * Intro: Ganapati loader → closed doors + "Tap to open" → doors swing open
+   * into the video (with sound) → hero.
    *
    * The video's last frame is the hero's ghat illustration, zoomed in: the art
    * sits at 142.59% of the video width, 21.30% off its left edge, top-aligned
@@ -111,17 +117,25 @@
     document.documentElement.classList.toggle('intro-lock', on);
   }
 
+  // Loader fades away to reveal the closed doors, then "Tap to open" appears
   function showOpenPrompt() {
+    var doors = document.getElementById('doorIntro');
     var btn = document.getElementById('openInvite');
     var video = document.getElementById('introPlayer');
-    if (!btn || !video || video.error) {
+    if (!doors || !btn || !video || video.error) {
       transitionToWelcome();
       return;
     }
-    btn.classList.add('is-ready');
-    // Tapping anywhere on the loader opens it too (bigger target)
-    loadingScreen.addEventListener('click', startIntro);
-    btn.focus({ preventScroll: true });
+
+    loadingScreen.classList.add('fade-out');
+    setTimeout(function () {
+      loadingScreen.style.display = 'none';
+      btn.classList.add('is-ready');
+      btn.focus({ preventScroll: true });
+    }, FADE_OUT_DURATION);
+
+    // Tapping anywhere on the doors opens them too (bigger target)
+    doors.addEventListener('click', startIntro);
   }
 
   function startIntro() {
@@ -150,8 +164,10 @@
       });
     }
 
-    loadingScreen.classList.add('fade-out');
-    setTimeout(function () { loadingScreen.style.display = 'none'; }, FADE_OUT_DURATION);
+    // Doors swing open, the camera walks through, and the doorway fades into the video
+    var doors = document.getElementById('doorIntro');
+    doors.classList.add('is-open');
+    setTimeout(function () { doors.classList.add('is-done'); }, 2300);
 
     video.addEventListener('ended', function () { finishIntro(true); });
     video.addEventListener('error', function () { finishIntro(false); });
