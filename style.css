@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28o"; }
+:root { --build: "2026-09-28q"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -417,6 +417,53 @@ html.scroll-lock body {
   background: rgba(107, 74, 46, 0.14);
   color: #5C3E26;
 }
+
+/* -- Music mute button: top right of the column, in the Skip button's style.
+      Fixed so it stays put while the details pages scroll; it never touches
+      the screen edge, so Safari doesn't tint its toolbar from it. Appears once
+      the intro has handed off to the hero (the Skip button's spot until then). -- */
+.music-toggle {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  right: calc(max(0px, (100vw - 412px) / 2) + 14px);
+  z-index: 80; /* over the page, under the intro layers */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid rgba(107, 74, 46, 0.28);
+  border-radius: 999px;
+  background: rgba(247, 236, 215, 0.55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: rgba(92, 62, 38, 0.85);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 600ms var(--ease-decelerate) 400ms, visibility 0s linear 1000ms, background-color 0.2s ease;
+}
+
+.music-toggle.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 600ms var(--ease-decelerate) 400ms, visibility 0s, background-color 0.2s ease;
+}
+
+.music-toggle:hover { background: rgba(247, 236, 215, 0.8); }
+
+.music-toggle:focus-visible {
+  outline: 2px solid rgba(92, 62, 38, 0.6);
+  outline-offset: 2px;
+}
+
+.music-icon { display: block; }
+
+.music-cross { display: none; }
+.music-toggle.is-muted .music-cross { display: inline; }
+.music-toggle.is-muted .music-waves { display: none; }
+.music-toggle.is-muted { color: rgba(92, 62, 38, 0.6); }
 
 /* Arriving from the video: the ghat sits at rest (no rise-in) so the video can be
    aligned to it, hidden while the video plays, then shown underneath the video's

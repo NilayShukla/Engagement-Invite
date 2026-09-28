@@ -33,12 +33,12 @@
     'assets/door_frame.webp',
     'assets/door_left.webp',
     'assets/door_right.webp',
-    'assets/top_floral_garland.webp?v=2026-09-28o',
-    'assets/bouquet_corner_left.png?v=2026-09-28o',
-    'assets/bouquet_corner_right.png?v=2026-09-28o',
-    'assets/banana_leaf_left.png?v=2026-09-28o',
-    'assets/banana_leaf_right.png?v=2026-09-28o',
-    'assets/center_motif.png?v=2026-09-28o',
+    'assets/top_floral_garland.webp?v=2026-09-28q',
+    'assets/bouquet_corner_left.png?v=2026-09-28q',
+    'assets/bouquet_corner_right.png?v=2026-09-28q',
+    'assets/banana_leaf_left.png?v=2026-09-28q',
+    'assets/banana_leaf_right.png?v=2026-09-28q',
+    'assets/center_motif.png?v=2026-09-28q',
     'assets/ghat_illustration.webp'
   ];
 
@@ -93,6 +93,9 @@
 
       setTimeout(function () {
         if (welcomeScreen) welcomeScreen.classList.add('animate');
+        // No tap has happened on this path, so the browser may refuse: the
+        // button then shows "muted" and a tap on it starts the music
+        startMusic();
       }, WELCOME_START_DELAY);
     }, FADE_OUT_DURATION);
   }
@@ -165,6 +168,8 @@
       });
     }
 
+    unlockMusic();
+
     // Doors swing open, the camera walks through, and the doorway fades into the video
     var doors = document.getElementById('doorIntro');
     doors.classList.add('is-open');
@@ -212,10 +217,12 @@
     }
 
     // 2. Fade the video away over it, while the garland, motif, names and
-    //    Scroll pill play their usual entrance around it.
+    //    Scroll pill play their usual entrance around it. The background
+    //    music takes over from the video's sound.
     setTimeout(function () {
       welcomeScreen.classList.add('animate');
       section.classList.add('is-fading');
+      startMusic();
     }, matched ? 350 : 0);
 
     setTimeout(function () {
@@ -223,6 +230,161 @@
       video.pause();
       video.removeAttribute('src');
     }, (matched ? 350 : 0) + 950);
+  }
+
+  /**
+   * Background music + the mute button (top right).
+   *
+   * iOS only lets audio play from a tap, so "Tap to open" briefly plays and
+   * pauses the track (unlockMusic); after that it can start on its own when
+   * the intro hands off to the hero (startMusic). The guest's mute choice is
+   * remembered for their next visit.
+   *
+   * The music always fades in (and out when muted). iOS ignores an audio
+   * element's .volume, so the track is routed through a Web Audio gain node,
+   * created inside a tap; where that isn't available, .volume is ramped instead.
+   */
+  var MUSIC_MUTED_KEY = 'bgMusicMuted';
+  var MUSIC_FADE_IN = 6;      // s, when the music first starts
+  var MUSIC_FADE_RESUME = 2;  // s, when unmuted or back from the background
+  var MUSIC_FADE_OUT = 0.5;   // s, when muted
+  var music = document.getElementById('bgMusic');
+  var musicToggle = document.getElementById('musicToggle');
+  var musicMuted = false;
+  var musicStarted = false;
+  var audioCtx = null, musicGain = null;
+  var fadeToken = 0, fadeFrame = 0;
+
+  try { musicMuted = localStorage.getItem(MUSIC_MUTED_KEY) === '1'; } catch (e) { /* storage blocked */ }
+
+  // Must run inside a tap: that's the only time iOS lets an AudioContext start
+  function ensureMusicGraph() {
+    if (audioCtx) {
+      if (audioCtx.state !== 'running') audioCtx.resume();
+      return;
+    }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try {
+      audioCtx = new AC();
+      musicGain = audioCtx.createGain();
+      musicGain.gain.value = 0;
+      audioCtx.createMediaElementSource(music).connect(musicGain);
+      musicGain.connect(audioCtx.destination);
+      audioCtx.resume();
+    } catch (e) {
+      audioCtx = null;
+      musicGain = null;
+    }
+  }
+
+  function currentLevel() {
+    return musicGain ? musicGain.gain.value : music.volume;
+  }
+
+  // Fade the music to level (0–1) over secs. Fading in eases in on a squared
+  // curve, since a straight gain ramp sounds like it jumps up at the start.
+  function fadeMusic(level, secs, done, fromLevel) {
+    var token = ++fadeToken;
+    var from = fromLevel != null ? fromLevel : currentLevel();
+    cancelAnimationFrame(fadeFrame);
+    function shape(t) { return level > from ? t * t : 1 - (1 - t) * (1 - t); }
+
+    if (musicGain) {
+      // Short linear steps along the curve (setValueCurveAtTime throws if it
+      // overlaps other scheduled changes in some browsers)
+      var g = musicGain.gain, now = audioCtx.currentTime, steps = 48;
+      g.cancelScheduledValues(now);
+      g.setValueAtTime(from, now);
+      if (secs > 0) {
+        for (var i = 1; i <= steps; i++) {
+          g.linearRampToValueAtTime(from + (level - from) * shape(i / steps), now + secs * i / steps);
+        }
+      } else {
+        g.setValueAtTime(level, now);
+      }
+    } else {
+      var t0 = performance.now();
+      (function step(t) {
+        var k = secs > 0 ? Math.min(1, (t - t0) / (secs * 1000)) : 1;
+        music.volume = Math.min(1, Math.max(0, from + (level - from) * shape(k)));
+        if (k < 1) fadeFrame = requestAnimationFrame(step);
+      })(t0);
+    }
+    if (done) setTimeout(function () { if (token === fadeToken) done(); }, secs * 1000 + 30);
+  }
+
+  function renderMusicToggle() {
+    if (!musicToggle) return;
+    var off = musicMuted || !musicStarted || music.paused;
+    musicToggle.classList.toggle('is-muted', off);
+    musicToggle.setAttribute('aria-pressed', off ? 'true' : 'false');
+    musicToggle.setAttribute('aria-label', off ? 'Play music' : 'Mute music');
+  }
+
+  // Start (or resume) from silence and fade up
+  function playMusic(fadeSecs) {
+    fadeMusic(0, 0, null, 0);
+    var p = music.play();
+    if (p && p.then) {
+      p.then(function () { fadeMusic(1, fadeSecs, null, 0); }, renderMusicToggle); // refused: show as muted
+    } else {
+      fadeMusic(1, fadeSecs, null, 0);
+    }
+  }
+
+  function unlockMusic() {
+    if (!music || musicMuted) return;
+    ensureMusicGraph();
+    music.volume = musicGain ? 1 : 0; // silent either way until startMusic
+    music.load();
+    var p = music.play();
+    if (p && p.then) {
+      p.then(function () { if (!musicStarted) music.pause(); }).catch(function () {});
+    }
+  }
+
+  function startMusic() {
+    if (!music || musicStarted) return;
+    musicStarted = true;
+    if (musicToggle) musicToggle.classList.add('is-visible');
+    if (!musicMuted) {
+      try { music.currentTime = 0; } catch (e) { /* not loaded yet */ }
+      playMusic(MUSIC_FADE_IN);
+    }
+    renderMusicToggle();
+  }
+
+  function initMusic() {
+    if (!music || !musicToggle) return;
+    music.addEventListener('play', renderMusicToggle);
+    music.addEventListener('pause', renderMusicToggle);
+
+    musicToggle.addEventListener('click', function () {
+      ensureMusicGraph(); // a tap: lets iOS start the fade-capable route
+      musicStarted = true;
+      musicMuted = !(musicMuted || music.paused);
+      try { localStorage.setItem(MUSIC_MUTED_KEY, musicMuted ? '1' : '0'); } catch (e) { /* storage blocked */ }
+      if (musicMuted) {
+        fadeMusic(0, MUSIC_FADE_OUT, function () { music.pause(); });
+      } else {
+        playMusic(MUSIC_FADE_RESUME);
+      }
+      renderMusicToggle();
+    });
+
+    // Quiet while the tab is in the background; fades back in on return
+    var resumeOnShow = false;
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        resumeOnShow = !music.paused && !musicMuted;
+        if (resumeOnShow) music.pause();
+      } else if (resumeOnShow) {
+        resumeOnShow = false;
+        if (audioCtx && audioCtx.state !== 'running') audioCtx.resume();
+        playMusic(MUSIC_FADE_RESUME);
+      }
+    });
   }
 
   /**
@@ -630,6 +792,7 @@
    */
   function init() {
     initDebug();
+    initMusic();
     setupIntroVideo();
     initPageTurn();
     initScrollReveal();
