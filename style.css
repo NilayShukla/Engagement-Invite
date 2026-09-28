@@ -260,7 +260,9 @@ img {
 
 .layer-banana-leaf-left {
   top: 201px;
-  left: -19px; /* Reverted to original */
+  /* The artwork has a flat cut along the bottom of its left side; push it far
+     enough off-screen that the cut edge hides behind the viewport edge. */
+  left: -53px;
   width: 108px;
   height: 82px;
   z-index: 4;
