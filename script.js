@@ -9,7 +9,7 @@
 
   // ---- Configuration ----
   const LOADING_ANIM_START_DELAY = 100;
-  const LOADING_DURATION = 3400;
+  const PROMPT_DELAY = 2400;
   const FADE_OUT_DURATION = 700;
   const WELCOME_START_DELAY = 200;
 
@@ -88,9 +88,154 @@
 
       setTimeout(function () {
         if (welcomeScreen) welcomeScreen.classList.add('animate');
+        lockScroll(false);
         initParallaxScroll();
       }, WELCOME_START_DELAY);
     }, FADE_OUT_DURATION);
+  }
+
+  /**
+   * Intro video: Ganapati loader → "Tap to open" → video (with sound) → hero.
+   *
+   * The video's last frame is the hero's ghat illustration, zoomed in: the art
+   * sits at 142.59% of the video width, 21.30% off its left edge, top-aligned
+   * (measured by aligning the two images). The video is scaled and placed so
+   * that art lands exactly on the hero's ghat image; at the end the hero ghat
+   * appears underneath the identical last frame and the video fades away.
+   */
+  var INTRO_ART = { width: 1.4259, left: -0.2130, top: 0.0013 };
+  var introStarted = false;
+  var introFinished = false;
+
+  function lockScroll(on) {
+    document.documentElement.classList.toggle('intro-lock', on);
+  }
+
+  function showOpenPrompt() {
+    var btn = document.getElementById('openInvite');
+    var video = document.getElementById('introPlayer');
+    if (!btn || !video || video.error) {
+      transitionToWelcome();
+      return;
+    }
+    btn.classList.add('is-ready');
+    // Tapping anywhere on the loader opens it too (bigger target)
+    loadingScreen.addEventListener('click', startIntro);
+    btn.focus({ preventScroll: true });
+  }
+
+  function startIntro() {
+    if (introStarted) return;
+    introStarted = true;
+
+    var section = document.getElementById('introVideo');
+    var video = document.getElementById('introPlayer');
+    var skip = document.getElementById('introSkip');
+
+    // Lay the hero out at rest (hidden) so the video can be aligned to its ghat
+    welcomeScreen.classList.add('from-video');
+    layoutIntroVideo();
+    window.addEventListener('resize', layoutIntroVideo);
+    video.addEventListener('loadedmetadata', layoutIntroVideo);
+
+    section.classList.add('is-playing');
+    video.muted = false;
+
+    // play() must be called inside the tap handler for sound to be allowed
+    var playing = video.play();
+    if (playing && playing.catch) {
+      playing.catch(function () {
+        video.muted = true; // sound refused: still show the video
+        video.play().catch(function () { finishIntro(false); });
+      });
+    }
+
+    loadingScreen.classList.add('fade-out');
+    setTimeout(function () { loadingScreen.style.display = 'none'; }, FADE_OUT_DURATION);
+
+    video.addEventListener('ended', function () { finishIntro(true); });
+    video.addEventListener('error', function () { finishIntro(false); });
+    skip.addEventListener('click', function () { finishIntro(false); });
+
+    // Safety net: if playback never gets going (slow network), don't strand the guest
+    var watchdog = setTimeout(function () {
+      if (video.currentTime < 0.2) finishIntro(false);
+    }, 7000);
+    video.addEventListener('playing', function () { clearTimeout(watchdog); }, { once: true });
+  }
+
+  /**
+   * Hand the screen over from the video to the hero.
+   * matched = true when the video reached its last frame (so the ghat can take
+   * over pixel-for-pixel); false for Skip / errors (plain cross-fade).
+   */
+  function finishIntro(matched) {
+    if (introFinished) return;
+    introFinished = true;
+
+    var section = document.getElementById('introVideo');
+    var video = document.getElementById('introPlayer');
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!matched) video.pause();
+    loadingScreen.style.display = 'none';
+    window.removeEventListener('resize', layoutIntroVideo);
+    welcomeScreen.classList.add('from-video');
+
+    // 1. Show the hero ghat underneath the video. The video's last frame is the
+    //    same image at the same size and position, so nothing visibly changes.
+    welcomeScreen.classList.add('ghat-in');
+
+    // Clouds aren't in the video: let them drift in after the hand-off
+    if (!reduceMotion) {
+      document.querySelectorAll('.welcome-ghat .cloud-item').forEach(function (cloud) {
+        cloud.animate([{ opacity: 0 }, { opacity: getComputedStyle(cloud).opacity }],
+          { duration: 900, delay: 1200, easing: 'ease-out', fill: 'backwards' });
+      });
+    }
+
+    // 2. Fade the video away over it, while the garland, motif, names and
+    //    Scroll pill play their usual entrance around it.
+    setTimeout(function () {
+      welcomeScreen.classList.add('animate');
+      section.classList.add('is-fading');
+    }, matched ? 350 : 0);
+
+    setTimeout(function () {
+      section.classList.add('is-done');
+      video.pause();
+      video.removeAttribute('src');
+      lockScroll(false);
+      initParallaxScroll();
+    }, (matched ? 350 : 0) + 950);
+  }
+
+  /**
+   * Size and place the video so its last frame lands exactly on the hero ghat:
+   * the art fills INTRO_ART.width of the video's width, offset by INTRO_ART.left.
+   */
+  function layoutIntroVideo() {
+    var section = document.getElementById('introVideo');
+    var video = document.getElementById('introPlayer');
+    var ghatImg = document.querySelector('.ghat-img');
+    if (!section || !video || !ghatImg) return;
+
+    var gr = ghatImg.getBoundingClientRect();
+    var sr = section.getBoundingClientRect();
+    var ratio = (video.videoHeight && video.videoWidth) ? video.videoHeight / video.videoWidth : 16 / 9;
+
+    var vw = gr.width / INTRO_ART.width;
+    var vh = vw * ratio;
+    var left = gr.left - sr.left - INTRO_ART.left * vw;
+    var top = gr.top - sr.top - INTRO_ART.top * vh;
+
+    video.style.width = vw + 'px';
+    video.style.height = vh + 'px';
+    video.style.left = left + 'px';
+    video.style.top = top + 'px';
+
+    // Narrower than the screen: feather the side edges into the cream too
+    section.classList.toggle('is-narrow', left > 0.5 || left + vw < sr.width - 0.5);
   }
 
   /**
@@ -334,10 +479,12 @@
     initArchReveal();
     initAutoAdvance();
     initScrollReveal();
+    lockScroll(true);
     preloadImages(criticalImages, 4000).then(function () {
       setTimeout(function () {
         startLoadingAnimations();
-        setTimeout(transitionToWelcome, LOADING_DURATION);
+        // Loader artwork has finished drawing by now; offer "Tap to open"
+        setTimeout(showOpenPrompt, PROMPT_DELAY);
       }, LOADING_ANIM_START_DELAY);
     });
   }

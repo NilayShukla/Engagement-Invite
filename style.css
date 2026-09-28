@@ -149,6 +149,127 @@ img {
   animation: screenFadeOut 700ms var(--ease-elegant) forwards;
 }
 
+/* No scrolling while the loader / intro video is on screen */
+html.intro-lock,
+html.intro-lock body {
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* -- "Tap to open" (a tap is required before video can play with sound) -- */
+.open-invite {
+  margin-top: 32px;
+  padding: 11px 26px;
+  border: 1px solid rgba(55, 42, 34, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  color: var(--text-dark);
+  cursor: pointer;
+  opacity: 0;
+  translate: 0 10px;
+  pointer-events: none;
+  transition: opacity 500ms var(--ease-decelerate), translate 500ms var(--ease-decelerate), background-color 0.2s ease;
+}
+
+.open-invite.is-ready {
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+  animation: openPulse 2.4s ease-in-out 600ms infinite;
+}
+
+.open-invite:hover { background: rgba(255, 255, 255, 0.7); }
+
+.open-invite:focus-visible {
+  outline: 2px solid var(--text-dark);
+  outline-offset: 3px;
+}
+
+@keyframes openPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(55, 42, 34, 0.18); }
+  50%      { box-shadow: 0 0 0 8px rgba(55, 42, 34, 0); }
+}
+
+/* -- Intro video: same column + height as the hero, so its last frame can hand
+      off to the hero ghat in place. No background (Safari edge colour extension). -- */
+.intro-video {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 90; /* under the loader (100), over the page */
+  width: 100%;
+  max-width: 412px;
+  height: calc(100vh + var(--hero-bleed));
+  height: calc(100lvh + var(--hero-bleed));
+  translate: -50% 0;
+  overflow: hidden;
+  visibility: hidden;
+  transition: opacity 900ms var(--ease-elegant);
+}
+
+.intro-video.is-playing { visibility: visible; }
+.intro-video.is-fading  { opacity: 0; pointer-events: none; }
+.intro-video.is-done    { display: none; }
+
+/* Sized and placed by script.js so the video's last frame sits exactly on the
+   hero's ghat image; the top (and, when narrower than the screen, the sides)
+   feather into the cream background. */
+.intro-video video {
+  position: absolute;
+  display: block;
+  object-fit: fill;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 64px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 64px);
+}
+
+.intro-video.is-narrow video {
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0, #000 64px),
+    linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0, #000 64px),
+    linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  mask-composite: intersect;
+}
+
+.intro-skip {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  right: 14px;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: #FFFFFF;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+/* Arriving from the video: the ghat sits at rest (no rise-in) so the video can be
+   aligned to it, hidden while the video plays, then shown underneath the video's
+   identical last frame just before the video fades away. */
+.welcome-screen.from-video .welcome-ghat,
+.welcome-screen.from-video.animate .welcome-ghat {
+  animation: none;
+  transform: none;
+  opacity: 0;
+  transition: opacity 350ms ease-out;
+}
+
+.welcome-screen.from-video.ghat-in .welcome-ghat {
+  opacity: 1;
+}
+
 
 /* ---- Loading Animations (staggered transitions) ---- */
 

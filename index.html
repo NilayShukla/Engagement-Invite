@@ -56,7 +56,21 @@
         <img src="assets/flower_daisy.png" alt="" class="flower flower-2">
         <img src="assets/flower_rose.png"  alt="" class="flower flower-3">
       </div>
+
+      <!-- Browsers only allow video with sound after a tap, so the intro starts here -->
+      <button type="button" class="open-invite" id="openInvite">Tap to open</button>
     </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- INTRO VIDEO: plays after the Ganapati loader, -->
+  <!-- its last frame hands off to the hero ghat    -->
+  <!-- ============================================ -->
+  <section class="intro-video" id="introVideo" aria-label="Intro video">
+    <video id="introPlayer" playsinline webkit-playsinline preload="auto" poster="assets/intro_poster.jpg">
+      <source src="assets/intro.mp4" type="video/mp4">
+    </video>
+    <button type="button" class="intro-skip" id="introSkip">Skip</button>
   </section>
 
   <!-- Welcome / Main Hero Screen -->
