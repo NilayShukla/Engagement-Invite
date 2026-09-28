@@ -5,12 +5,12 @@ Guest-journey tracking for niya-forever.in, sent to [PostHog](https://posthog.co
 
 ## Turning it on
 
-1. Create a free PostHog Cloud account (US region) and a project for the invite.
-2. Copy the **Project API key** (starts `phc_`) into `POSTHOG_KEY` at the top of `analytics.js`.
-   It can only send events, so it is safe in a public repo. If you picked the EU region,
-   also set `POSTHOG_HOST` to `https://eu.i.posthog.com`.
-3. Deploy (merge to `main`).
-4. On each of your own devices, open `https://niya-forever.in/?internal` once so your visits
+PostHog project **633757** (US Cloud). Its project API key is set in `POSTHOG_KEY` at the top of
+`analytics.js`; that key can only send events, so it is safe in a public repo. Emptying it turns
+tracking off.
+
+1. Deploy (merge to `main`).
+2. On each of your own devices, open `https://niya-forever.in/?internal` once so your visits
    aren't counted (`?internal=0` undoes it).
 
 Share a tagged link per group so the report can split visits by source, e.g.

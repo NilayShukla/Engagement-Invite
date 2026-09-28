@@ -12,7 +12,7 @@
   // ---- Configuration ----
   // Project API key from PostHog → Project settings (starts "phc_"). It only
   // lets browsers send events, so it is safe to publish. Empty = analytics off.
-  var POSTHOG_KEY = '';
+  var POSTHOG_KEY = 'phc_keuFtTx2e4MDCvAz5xX9oQyBuN6Q7M5rTYuUygaGdEDU';
   var POSTHOG_HOST = 'https://us.i.posthog.com';
 
   // Open the site once with ?internal to stop counting your own visits on that
