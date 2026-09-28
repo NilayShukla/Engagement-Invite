@@ -33,12 +33,12 @@
     'assets/door_frame.webp',
     'assets/door_left.webp',
     'assets/door_right.webp',
-    'assets/top_floral_garland.webp?v=2026-09-28l',
-    'assets/bouquet_corner_left.png?v=2026-09-28l',
-    'assets/bouquet_corner_right.png?v=2026-09-28l',
-    'assets/banana_leaf_left.png?v=2026-09-28l',
-    'assets/banana_leaf_right.png?v=2026-09-28l',
-    'assets/center_motif.png?v=2026-09-28l',
+    'assets/top_floral_garland.webp?v=2026-09-28n',
+    'assets/bouquet_corner_left.png?v=2026-09-28n',
+    'assets/bouquet_corner_right.png?v=2026-09-28n',
+    'assets/banana_leaf_left.png?v=2026-09-28n',
+    'assets/banana_leaf_right.png?v=2026-09-28n',
+    'assets/center_motif.png?v=2026-09-28n',
     'assets/ghat_illustration.webp'
   ];
 
@@ -362,8 +362,9 @@
    * pill plays one timed transition, so nothing fights the finger or momentum:
    *   0.00–0.50  the ghat slides up to where the text was; text, motif and
    *              garland drift up and fade (parallax)
-   *   0.35–1.00  the arch rises from the bottom edge and opens (--p), while
-   *              the hero dims beneath it (--cover)
+   *   0.00–1.00  the arch rises from the bottom edge and opens (--p), while
+   *              the hero dims beneath it (--cover). It starts moving on the
+   *              very first frame (ease-out), so the gesture never feels ignored.
    * Then the hero is hidden and the details pages scroll natively from the
    * top. A deliberate pull-down at the very top of the date page plays the
    * same transition in reverse.
@@ -371,7 +372,7 @@
    * Nothing here is position: sticky/fixed, so iOS Safari never paints a
    * solid colour band behind its toolbar.
    */
-  var TURN_DURATION = 1700;  // ms
+  var TURN_DURATION = 1400;  // ms
   var PULL_TO_RETURN = 60;   // px of downward pull at the top of the date page
   var SWIPE_TO_TURN = 24;    // px of upward swipe on the hero
 
@@ -388,6 +389,7 @@
 
     function clamp01(v) { return Math.min(1, Math.max(0, v)); }
     function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+    function easeOut(t) { return 1 - Math.pow(1 - t, 2.6); }
 
     // Distances are measured at the start of each turn (the hero's layout at rest)
     function measure() {
@@ -410,7 +412,7 @@
     // t: 0 = hero at rest, 1 = date page in place
     function render(t) {
       var g = ease(clamp01(t / 0.5));
-      var a = ease(clamp01((t - 0.35) / 0.65));
+      var a = easeOut(clamp01(t));
 
       if (welcomeGhat) {
         welcomeGhat.style.transformOrigin = '50% 100%';

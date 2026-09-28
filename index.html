@@ -20,10 +20,10 @@
   <link rel="preload" as="image" href="assets/flower_lily.png">
   <link rel="preload" as="image" href="assets/flower_daisy.png">
   <link rel="preload" as="image" href="assets/flower_rose.png">
-  <link rel="preload" as="image" href="assets/top_floral_garland.webp?v=2026-09-28l">
+  <link rel="preload" as="image" href="assets/top_floral_garland.webp?v=2026-09-28n">
   <link rel="preload" as="image" href="assets/ghat_illustration.webp">
 
-  <link rel="stylesheet" href="style.css?v=2026-09-28l">
+  <link rel="stylesheet" href="style.css?v=2026-09-28n">
 </head>
 <body>
 
@@ -95,25 +95,25 @@
       <!-- Top decoration: individual absolute-positioned layers from Figma -->
       <div class="welcome-top-decoration" id="topDecoration">
         <div class="layer-item layer-top-floral-garland">
-          <img src="assets/top_floral_garland.webp?v=2026-09-28l" alt="">
+          <img src="assets/top_floral_garland.webp?v=2026-09-28n" alt="">
         </div>
         <div class="layer-item layer-bouquet-left">
-          <img src="assets/bouquet_corner_left.png?v=2026-09-28l" alt="">
+          <img src="assets/bouquet_corner_left.png?v=2026-09-28n" alt="">
         </div>
         <div class="layer-item layer-bouquet-right">
-          <img src="assets/bouquet_corner_right.png?v=2026-09-28l" alt="">
+          <img src="assets/bouquet_corner_right.png?v=2026-09-28n" alt="">
         </div>
         <div class="layer-item layer-banana-leaf-left">
-          <img src="assets/banana_leaf_left.png?v=2026-09-28l" alt="">
+          <img src="assets/banana_leaf_left.png?v=2026-09-28n" alt="">
         </div>
         <div class="layer-item layer-banana-leaf-right">
-          <img src="assets/banana_leaf_right.png?v=2026-09-28l" alt="">
+          <img src="assets/banana_leaf_right.png?v=2026-09-28n" alt="">
         </div>
       </div>
 
       <!-- Center floral motif -->
       <div class="center-motif" id="centerMotif">
-        <img src="assets/center_motif.png?v=2026-09-28l" alt="" class="motif-img">
+        <img src="assets/center_motif.png?v=2026-09-28n" alt="" class="motif-img">
       </div>
 
       <!-- Text area -->
@@ -194,24 +194,42 @@
       </div>
     </div>
 
-    <!-- Venue & Map (Figma 23:189) -->
-    <!-- Dress code -->
+    <!-- Dress code: arch-shaped cards crowned with flowers from the Figma
+         sticker sheet (Figma 7:11), framed by banana leaves like the arch page -->
     <div class="dress-section" aria-label="Dress code">
-      <p class="dress-label reveal">Dress Code</p>
-      <div class="dress-columns reveal">
-        <div class="dress-col">
+      <img src="assets/dress_banana_leaf.png" alt="" class="dress-leaf dress-leaf-left">
+      <img src="assets/dress_banana_leaf.png" alt="" class="dress-leaf dress-leaf-right">
+
+      <div class="dress-heading reveal">
+        <span class="dress-heading-rule" aria-hidden="true"></span>
+        <img src="assets/dress_genda_1.png" alt="" class="dress-genda">
+        <p class="dress-label">Dress Code</p>
+        <img src="assets/dress_genda_2.png" alt="" class="dress-genda">
+        <span class="dress-heading-rule" aria-hidden="true"></span>
+      </div>
+
+      <div class="dress-cards">
+        <div class="dress-card reveal">
+          <img src="assets/dress_lily.png" alt="" class="dress-flower dress-flower-lily">
           <p class="dress-who">Women</p>
           <h3 class="dress-title">Saree or Lehenga</h3>
         </div>
-        <span class="dress-rule" aria-hidden="true"></span>
-        <div class="dress-col">
+        <div class="dress-card reveal">
+          <img src="assets/dress_marigold.png" alt="" class="dress-flower dress-flower-marigold">
           <p class="dress-who">Men</p>
           <h3 class="dress-title">Kurta or Bandhgala</h3>
         </div>
       </div>
-      <span class="dress-divider" aria-hidden="true"></span>
+
+      <!-- Echoes the loader's row of three flowers -->
+      <div class="dress-flourish reveal" aria-hidden="true">
+        <img src="assets/dress_rose_bud_left.png" alt="" class="flourish-bud flourish-bud-left">
+        <img src="assets/dress_marigold_single.png" alt="" class="flourish-marigold">
+        <img src="assets/dress_rose_bud_right.png" alt="" class="flourish-bud flourish-bud-right">
+      </div>
     </div>
 
+    <!-- Venue & Map (Figma 23:189) -->
     <div class="venue-section">
       <div class="venue-text reveal">
         <p class="venue-label">Venue</p>
@@ -226,15 +244,10 @@
           referrerpolicy="no-referrer-when-downgrade"
           allowfullscreen></iframe>
       </div>
-      <!-- Figma 23:151 -->
-      <a href="https://www.google.com/maps/place/Royal+Cafe,+Shahnajaf+Rd,+Prem+Nagar,+Hazratganj,+Lucknow,+Uttar+Pradesh+226001/@26.8563183,80.9454876,17z/data=!4m6!3m5!1s0x399bfd0a55555561:0x2c774a915a7f3cfb!8m2!3d26.8563183!4d80.9454876" target="_blank" rel="noopener" class="maps-button reveal">
-        <img src="assets/maps_icon.png" alt="" class="maps-icon" width="24" height="24">
-        <span>Open in Maps</span>
-      </a>
     </div>
   </section>
   </main>
 
-  <script src="script.js?v=2026-09-28l"></script>
+  <script src="script.js?v=2026-09-28n"></script>
 </body>
 </html>
