@@ -20,10 +20,10 @@
   <link rel="preload" as="image" href="assets/flower_lily.png">
   <link rel="preload" as="image" href="assets/flower_daisy.png">
   <link rel="preload" as="image" href="assets/flower_rose.png">
-  <link rel="preload" as="image" href="assets/top_floral_garland.webp?v=2026-09-28j">
+  <link rel="preload" as="image" href="assets/top_floral_garland.webp?v=2026-09-28k">
   <link rel="preload" as="image" href="assets/ghat_illustration.webp">
 
-  <link rel="stylesheet" href="style.css?v=2026-09-28j">
+  <link rel="stylesheet" href="style.css?v=2026-09-28k">
 </head>
 <body>
 
@@ -78,9 +78,11 @@
   <!-- its last frame hands off to the hero ghat    -->
   <!-- ============================================ -->
   <section class="intro-video" id="introVideo" aria-label="Intro video">
-    <video id="introPlayer" playsinline webkit-playsinline preload="auto" poster="assets/intro_poster.jpg">
-      <source src="assets/intro.mp4" type="video/mp4">
-    </video>
+    <!-- script.js picks the source: intro_alpha.mp4 (picture on top, sky mask
+         underneath) drawn with transparency into the canvas via WebGL, or the
+         plain intro.mp4 when WebGL isn't available -->
+    <video id="introPlayer" playsinline webkit-playsinline preload="auto" poster="assets/intro_poster.jpg"></video>
+    <canvas id="introCanvas" aria-hidden="true"></canvas>
     <button type="button" class="intro-skip" id="introSkip">Skip</button>
   </section>
 
@@ -93,25 +95,25 @@
       <!-- Top decoration: individual absolute-positioned layers from Figma -->
       <div class="welcome-top-decoration" id="topDecoration">
         <div class="layer-item layer-top-floral-garland">
-          <img src="assets/top_floral_garland.webp?v=2026-09-28j" alt="">
+          <img src="assets/top_floral_garland.webp?v=2026-09-28k" alt="">
         </div>
         <div class="layer-item layer-bouquet-left">
-          <img src="assets/bouquet_corner_left.png?v=2026-09-28j" alt="">
+          <img src="assets/bouquet_corner_left.png?v=2026-09-28k" alt="">
         </div>
         <div class="layer-item layer-bouquet-right">
-          <img src="assets/bouquet_corner_right.png?v=2026-09-28j" alt="">
+          <img src="assets/bouquet_corner_right.png?v=2026-09-28k" alt="">
         </div>
         <div class="layer-item layer-banana-leaf-left">
-          <img src="assets/banana_leaf_left.png?v=2026-09-28j" alt="">
+          <img src="assets/banana_leaf_left.png?v=2026-09-28k" alt="">
         </div>
         <div class="layer-item layer-banana-leaf-right">
-          <img src="assets/banana_leaf_right.png?v=2026-09-28j" alt="">
+          <img src="assets/banana_leaf_right.png?v=2026-09-28k" alt="">
         </div>
       </div>
 
       <!-- Center floral motif -->
       <div class="center-motif" id="centerMotif">
-        <img src="assets/center_motif.png?v=2026-09-28j" alt="" class="motif-img">
+        <img src="assets/center_motif.png?v=2026-09-28k" alt="" class="motif-img">
       </div>
 
       <!-- Text area -->
@@ -233,6 +235,6 @@
   </section>
   </main>
 
-  <script src="script.js?v=2026-09-28j"></script>
+  <script src="script.js?v=2026-09-28k"></script>
 </body>
 </html>

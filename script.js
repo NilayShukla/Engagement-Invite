@@ -33,12 +33,12 @@
     'assets/door_frame.webp',
     'assets/door_left.webp',
     'assets/door_right.webp',
-    'assets/top_floral_garland.webp?v=2026-09-28j',
-    'assets/bouquet_corner_left.png?v=2026-09-28j',
-    'assets/bouquet_corner_right.png?v=2026-09-28j',
-    'assets/banana_leaf_left.png?v=2026-09-28j',
-    'assets/banana_leaf_right.png?v=2026-09-28j',
-    'assets/center_motif.png?v=2026-09-28j',
+    'assets/top_floral_garland.webp?v=2026-09-28k',
+    'assets/bouquet_corner_left.png?v=2026-09-28k',
+    'assets/bouquet_corner_right.png?v=2026-09-28k',
+    'assets/banana_leaf_left.png?v=2026-09-28k',
+    'assets/banana_leaf_right.png?v=2026-09-28k',
+    'assets/center_motif.png?v=2026-09-28k',
     'assets/ghat_illustration.webp'
   ];
 
@@ -157,6 +157,7 @@
 
     // play() must be called inside the tap handler for sound to be allowed
     var playing = video.play();
+    startIntroRender();
     if (playing && playing.catch) {
       playing.catch(function () {
         video.muted = true; // sound refused: still show the video
@@ -225,6 +226,98 @@
   }
 
   /**
+   * Transparent-sky intro video.
+   *
+   * intro_alpha.mp4 is 720x2560: the picture in the top half and a sky mask
+   * (white = keep, black = sky) in the bottom half, pre-computed per frame. A
+   * tiny WebGL shader combines them into a transparent frame on the canvas, so
+   * the parchment sky disappears into the page's cream (works on iOS Safari,
+   * which can't play transparent WebM). Without WebGL the plain intro.mp4 plays.
+   */
+  var introGL = null;
+
+  function setupIntroVideo() {
+    var section = document.getElementById('introVideo');
+    var video = document.getElementById('introPlayer');
+    var canvas = document.getElementById('introCanvas');
+    if (!section || !video) return;
+
+    var gl = null;
+    try {
+      gl = canvas && canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });
+    } catch (e) { gl = null; }
+
+    if (gl) {
+      var vs = 'attribute vec2 p; varying vec2 v; void main(){ v = vec2(p.x * 0.5 + 0.5, 0.5 - p.y * 0.5); gl_Position = vec4(p, 0.0, 1.0); }';
+      var fs = 'precision mediump float; uniform sampler2D t; varying vec2 v;' +
+        'void main(){ vec3 c = texture2D(t, vec2(v.x, v.y * 0.5)).rgb;' +
+        ' float a = texture2D(t, vec2(v.x, 0.5 + v.y * 0.5)).r;' +
+        ' gl_FragColor = vec4(c * a, a); }';
+      function shader(type, src) {
+        var s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null;
+      }
+      var prog = gl.createProgram();
+      var v = shader(gl.VERTEX_SHADER, vs), f = shader(gl.FRAGMENT_SHADER, fs);
+      if (v && f) {
+        gl.attachShader(prog, v);
+        gl.attachShader(prog, f);
+        gl.linkProgram(prog);
+      }
+      if (v && f && gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+        gl.useProgram(prog);
+        var buf = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+        var loc = gl.getAttribLocation(prog, 'p');
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+        var tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.clearColor(0, 0, 0, 0);
+        introGL = { gl: gl, canvas: canvas };
+      }
+    }
+
+    video.src = introGL ? 'assets/intro_alpha.mp4' : 'assets/intro.mp4';
+    section.classList.toggle('has-alpha', !!introGL);
+    video.load();
+  }
+
+  function drawIntroFrame() {
+    var video = document.getElementById('introPlayer');
+    if (!introGL || video.readyState < 2) return;
+    var gl = introGL.gl;
+    gl.viewport(0, 0, introGL.canvas.width, introGL.canvas.height);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  function startIntroRender() {
+    var video = document.getElementById('introPlayer');
+    if (!introGL) return;
+    if (video.requestVideoFrameCallback) {
+      (function onFrame() {
+        drawIntroFrame();
+        video.requestVideoFrameCallback(onFrame);
+      })();
+    } else {
+      (function loop() {
+        drawIntroFrame();
+        if (!video.paused && !video.ended) requestAnimationFrame(loop);
+      })();
+    }
+    video.addEventListener('ended', drawIntroFrame); // make sure the last frame is on the canvas
+  }
+
+  /**
    * Size and place the video so its last frame lands exactly on the hero ghat:
    * the art fills INTRO_ART.width of the video's width, offset by INTRO_ART.left.
    */
@@ -236,17 +329,27 @@
 
     var gr = ghatImg.getBoundingClientRect();
     var sr = section.getBoundingClientRect();
-    var ratio = (video.videoHeight && video.videoWidth) ? video.videoHeight / video.videoWidth : 16 / 9;
+    // The picture is 9:16 (the alpha file stacks picture + mask, so don't read its size)
+    var ratio = (!introGL && video.videoHeight && video.videoWidth) ? video.videoHeight / video.videoWidth : 16 / 9;
 
     var vw = gr.width / INTRO_ART.width;
     var vh = vw * ratio;
     var left = gr.left - sr.left - INTRO_ART.left * vw;
     var top = gr.top - sr.top - INTRO_ART.top * vh;
 
-    video.style.width = vw + 'px';
-    video.style.height = vh + 'px';
-    video.style.left = left + 'px';
-    video.style.top = top + 'px';
+    [video, introGL && introGL.canvas].forEach(function (el) {
+      if (!el) return;
+      el.style.width = vw + 'px';
+      el.style.height = vh + 'px';
+      el.style.left = left + 'px';
+      el.style.top = top + 'px';
+    });
+    if (introGL) {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      introGL.canvas.width = Math.round(vw * dpr);
+      introGL.canvas.height = Math.round(vh * dpr);
+      drawIntroFrame();
+    }
 
     // Narrower than the screen: feather the side edges into the cream too
     section.classList.toggle('is-narrow', left > 0.5 || left + vw < sr.width - 0.5);
@@ -291,13 +394,17 @@
       var vh = window.innerHeight;
       var ghatImg = welcomeGhat && welcomeGhat.querySelector('.ghat-img');
       var textTop = welcomeTextArea ? welcomeTextArea.getBoundingClientRect().top : vh * 0.3;
-      var slide = 0;
+      var grow = 0;
       if (ghatImg) {
         var gr = ghatImg.getBoundingClientRect();
-        // Spires start ~24% down the artwork; bring them up to the top of the text
-        slide = Math.max(0, gr.top + gr.height * 0.24 - textTop);
+        // Spires start ~24% down the artwork; bring them up to the top of the
+        // text by growing the ghat from its bottom edge, which stays on the
+        // screen's bottom edge (a plain slide would lift it and leave a gap).
+        var rise = Math.max(0, gr.top + gr.height * 0.24 - textTop);
+        var spireToBottom = gr.bottom - (gr.top + gr.height * 0.24);
+        grow = spireToBottom > 0 ? rise / spireToBottom : 0;
       }
-      return { heroH: welcomeScreen.offsetHeight, slide: slide };
+      return { heroH: welcomeScreen.offsetHeight, grow: grow };
     }
 
     // t: 0 = hero at rest, 1 = date page in place
@@ -305,7 +412,10 @@
       var g = ease(clamp01(t / 0.5));
       var a = ease(clamp01((t - 0.35) / 0.65));
 
-      if (welcomeGhat) welcomeGhat.style.translate = '0 ' + (-geom.slide * g) + 'px';
+      if (welcomeGhat) {
+        welcomeGhat.style.transformOrigin = '50% 100%';
+        welcomeGhat.style.scale = String(1 + geom.grow * g);
+      }
       if (welcomeTextArea) {
         welcomeTextArea.style.translate = '0 ' + (-40 * g) + 'px';
         welcomeTextArea.style.opacity = String(1 - g);
@@ -518,6 +628,7 @@
    */
   function init() {
     initDebug();
+    setupIntroVideo();
     initPageTurn();
     initScrollReveal();
     lockScroll(true);

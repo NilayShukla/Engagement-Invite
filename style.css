@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28j"; }
+:root { --build: "2026-09-28k"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -374,6 +374,18 @@ html.scroll-lock body {
   object-fit: fill;
 }
 
+/* Transparent-sky mode: the canvas shows the keyed picture; the video element
+   only plays (sound + frames) underneath, invisible */
+.intro-video canvas {
+  position: absolute;
+  display: none;
+  pointer-events: none;
+}
+
+.intro-video.has-alpha canvas { display: block; }
+.intro-video.has-alpha video  { opacity: 0; }
+
+.intro-video.is-narrow canvas,
 .intro-video.is-narrow video {
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
   mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
@@ -1222,11 +1234,8 @@ html.mode-details .welcome-screen {
   display: none;
 }
 
-/* Welcome recedes and dims as the date page opens over it (--cover set in script.js) */
-.welcome-screen .welcome-content {
-  transform: scale(calc(1 - var(--cover, 0) * 0.06));
-  transform-origin: 50% 40%;
-}
+/* Welcome dims as the date page opens over it (--cover set in script.js).
+   No scale-down: shrinking would lift the hero's edges off the screen edges. */
 
 .welcome-screen::after {
   content: '';
