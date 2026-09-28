@@ -33,6 +33,37 @@
   }
 }
 
+/* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
+:root { --build: "2026-09-28d"; }
+
+/* ?debug: stripe the part of the hero that should sit behind Safari's bottom bar */
+html.debug-bleed .welcome-content::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: max(var(--hero-bleed), 6px);
+  background: repeating-linear-gradient(45deg, #FF00FF 0 12px, #FFE600 12px 24px);
+  z-index: 50;
+  pointer-events: none;
+}
+
+.debug-panel {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  left: 8px;
+  z-index: 1000;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.78);
+  color: #7CFC9A;
+  font: 11px/1.45 ui-monospace, Menlo, monospace;
+  white-space: pre;
+  pointer-events: none;
+}
+
 /* ---- Reset ---- */
 *, *::before, *::after {
   margin: 0;
@@ -158,49 +189,71 @@ html.intro-lock body {
 
 /* -- "Tap to open" (a tap is required before video can play with sound) -- */
 .open-invite {
-  /* Floats over the threshold, at the same height as the hero's Scroll pill */
+  /* A brass plaque to match the door's handles, bells and studs. Floats over the
+     threshold, at the same height as the hero's Scroll pill. */
   position: absolute;
   left: 50%;
   bottom: calc(24px + var(--hero-bleed) + env(safe-area-inset-bottom, 0px));
   bottom: calc(24px + var(--hero-bleed) + max(env(safe-area-inset-bottom, 0px), 100lvh - 100svh));
   transform: translateX(-50%);
   z-index: 5;
-  padding: 11px 26px;
-  border: 1px solid rgba(55, 42, 34, 0.35);
+  overflow: hidden;
+  padding: 10px 26px;
+  border: 1px solid #8A6424;
   border-radius: 999px;
-  background: rgba(255, 250, 240, 0.72);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  background: linear-gradient(180deg, #E9CD86 0%, #CFA650 48%, #B8873A 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 210, 0.75),
+    inset 0 -1px 0 rgba(90, 60, 20, 0.35),
+    0 2px 8px rgba(60, 35, 15, 0.28);
   font-family: var(--font-body);
   font-size: 15px;
   font-weight: 500;
-  letter-spacing: 0.4px;
-  color: var(--text-dark);
+  letter-spacing: 0.6px;
+  color: #4A2E14;
+  text-shadow: 0 1px 0 rgba(255, 238, 190, 0.6);
   cursor: pointer;
   opacity: 0;
   translate: 0 10px;
   pointer-events: none;
-  transition: opacity 500ms var(--ease-decelerate), translate 500ms var(--ease-decelerate), background-color 0.2s ease;
+  transition: opacity 500ms var(--ease-decelerate), translate 500ms var(--ease-decelerate), filter 0.2s ease;
+}
+
+/* Shimmer: a soft band of light sweeps across the brass every few seconds */
+.open-invite::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 45%;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 250, 225, 0.75) 50%, transparent 100%);
+  transform: skewX(-18deg);
+  pointer-events: none;
 }
 
 .open-invite.is-ready {
   opacity: 1;
   translate: 0 0;
   pointer-events: auto;
-  animation: openPulse 2.4s ease-in-out 600ms infinite;
 }
 
-.open-invite:hover { background: rgba(255, 255, 255, 0.7); }
+.open-invite.is-ready::after {
+  animation: brassShimmer 3.2s ease-in-out 700ms infinite;
+}
+
+.open-invite:hover { filter: brightness(1.06); }
 
 .open-invite:focus-visible {
-  outline: 2px solid var(--text-dark);
+  outline: 2px solid #F7ECD7;
   outline-offset: 3px;
 }
 
-@keyframes openPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(55, 42, 34, 0.18); }
-  50%      { box-shadow: 0 0 0 8px rgba(55, 42, 34, 0); }
+@keyframes brassShimmer {
+  0%       { left: -60%; }
+  45%, 100% { left: 130%; }
 }
+
 
 /* -- Doors: stone arch + toran (fixed) with two leaves that swing open in 3D.
       The stage covers the column like the hero; layer positions are the door

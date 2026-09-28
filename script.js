@@ -33,12 +33,12 @@
     'assets/door_frame.webp',
     'assets/door_left.webp',
     'assets/door_right.webp',
-    'assets/top_floral_garland.webp',
-    'assets/bouquet_corner_left.png',
-    'assets/bouquet_corner_right.png',
-    'assets/banana_leaf_left.png',
-    'assets/banana_leaf_right.png',
-    'assets/center_motif.png',
+    'assets/top_floral_garland.webp?v=2026-09-28d',
+    'assets/bouquet_corner_left.png?v=2026-09-28d',
+    'assets/bouquet_corner_right.png?v=2026-09-28d',
+    'assets/banana_leaf_left.png?v=2026-09-28d',
+    'assets/banana_leaf_right.png?v=2026-09-28d',
+    'assets/center_motif.png?v=2026-09-28d',
     'assets/ghat_illustration.webp'
   ];
 
@@ -489,9 +489,59 @@
   }
 
   /**
+   * Diagnostics for real devices: open the site with ?debug to see the
+   * viewport / safe-area numbers the browser reports, and to paint the
+   * hero's below-the-toolbar strip in stripes (it should show through
+   * Safari's translucent bottom bar).
+   */
+  function initDebug() {
+    if (!/[?&]debug\b/.test(location.search)) return;
+    document.documentElement.classList.add('debug-bleed');
+
+    var probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;top:0;left:0;width:1px;' +
+      'padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
+    document.body.appendChild(probe);
+    function h(unit) {
+      var d = document.createElement('div');
+      d.style.cssText = 'position:absolute;visibility:hidden;width:1px;height:100' + unit;
+      document.body.appendChild(d);
+      var v = Math.round(d.getBoundingClientRect().height);
+      d.remove();
+      return v;
+    }
+
+    var panel = document.createElement('pre');
+    panel.className = 'debug-panel';
+    document.body.appendChild(panel);
+
+    function update() {
+      var cs = getComputedStyle(probe);
+      var root = getComputedStyle(document.documentElement);
+      var hero = document.querySelector('.welcome-content').getBoundingClientRect();
+      panel.textContent = [
+        'build ' + root.getPropertyValue('--build').trim(),
+        'inner ' + innerWidth + 'x' + innerHeight + '  client ' + document.documentElement.clientHeight,
+        'visualVP ' + (window.visualViewport ? Math.round(visualViewport.height) : '-') + '  screen ' + screen.height,
+        'vh ' + h('vh') + ' lvh ' + h('lvh') + ' svh ' + h('svh') + ' dvh ' + h('dvh'),
+        'safe top ' + cs.paddingTop + ' bottom ' + cs.paddingBottom,
+        'touch-callout ' + (CSS.supports('-webkit-touch-callout', 'none') ? 'yes' : 'no') +
+          '  bleed ' + root.getPropertyValue('--hero-bleed').trim(),
+        'hero ' + Math.round(hero.top) + '..' + Math.round(hero.bottom) + '  scrollY ' + Math.round(scrollY),
+        navigator.userAgent.replace(/^.*?\(([^)]*)\).*$/, '$1').slice(0, 60)
+      ].join('\n');
+    }
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, { passive: true });
+    if (window.visualViewport) visualViewport.addEventListener('resize', update);
+  }
+
+  /**
    * Main initialization — runs after DOM is ready.
    */
   function init() {
+    initDebug();
     initArchReveal();
     initAutoAdvance();
     initScrollReveal();
