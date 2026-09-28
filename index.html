@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- Home-screen (standalone) mode: draw under a translucent status bar -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Nilay &amp; Ananya — Engagement Invitation</title>
   <meta name="description" content="You are cordially invited to the engagement ceremony of Nilay &amp; Ananya. Join us in celebrating this joyous occasion.">
   <meta name="theme-color" content="#F5E9CE">
@@ -17,6 +21,7 @@
   <link rel="preload" as="image" href="assets/flower_lily.png">
   <link rel="preload" as="image" href="assets/flower_daisy.png">
   <link rel="preload" as="image" href="assets/flower_rose.png">
+  <link rel="preload" as="image" href="assets/top_border.png">
   <link rel="preload" as="image" href="assets/top_floral_garland.webp">
   <link rel="preload" as="image" href="assets/ghat_illustration.webp">
 
@@ -63,6 +68,10 @@
 
       <!-- Top decoration: individual absolute-positioned layers from Figma -->
       <div class="welcome-top-decoration" id="topDecoration">
+        <!-- Ornamental strip: sits behind the notch/status bar, fades out towards the top -->
+        <div class="layer-item layer-top-border">
+          <img src="assets/top_border.png" alt="">
+        </div>
         <div class="layer-item layer-top-floral-garland">
           <img src="assets/top_floral_garland.webp" alt="">
         </div>

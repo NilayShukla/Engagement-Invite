@@ -30,6 +30,7 @@
     'assets/flower_lily.png',
     'assets/flower_daisy.png',
     'assets/flower_rose.png',
+    'assets/top_border.png',
     'assets/top_floral_garland.webp',
     'assets/bouquet_corner_left.png',
     'assets/bouquet_corner_right.png',

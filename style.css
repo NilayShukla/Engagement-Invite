@@ -193,8 +193,9 @@ img {
   align-items: center;
   max-width: 412px;
   margin: 0 auto;
+  /* Large viewport: the hero continues underneath Safari's translucent toolbars */
   height: 100vh;
-  height: 100svh;
+  height: 100lvh;
   min-height: 640px;
   overflow: hidden;
   position: relative;
@@ -219,8 +220,9 @@ img {
 .welcome-top-decoration {
   width: 100%;
   height: 330px;
-  /* Top border strip removed: pull the garland (61px down in Figma) up to the very top */
-  margin-top: -61px;
+  /* Garland (61px down in Figma) starts right below the notch / status bar
+     (safe-area inset is 0 on phones without one and on desktop). */
+  margin-top: calc(env(safe-area-inset-top, 0px) - 61px);
   margin-bottom: -140px;
   position: relative;
   z-index: 3; /* Leaves sit above the ghat sky fade */
@@ -231,6 +233,20 @@ img {
   position: absolute;
   will-change: transform, opacity;
   opacity: 0;
+}
+
+/* Ornamental strip behind the notch: transparent at the top, only its lower
+   edge shows, overlapping the top 16px of the garland. */
+.layer-top-border {
+  top: 14px;
+  left: 50%;
+  width: 842px;
+  height: 63px;
+  margin-left: -421px;
+  z-index: 3;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.35) 45%, #000 85%);
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.35) 45%, #000 85%);
+  pointer-events: none;
 }
 
 .layer-top-floral-garland {
@@ -356,8 +372,8 @@ img {
      river) fits on screen: shrinks on short phones (e.g. iPhone Safari with its bars),
      grows on very tall screens. Artwork starts 184px down; aspect is 1200:1493.
      Never narrower than 420px so it always covers the 412px column. */
-  --ghat-w: max(420px, calc((100vh - 184px) * 0.8038));
-  --ghat-w: max(420px, calc((100svh - 184px) * 0.8038));
+  --ghat-w: max(420px, calc((100vh - 184px - env(safe-area-inset-top, 0px)) * 0.8038));
+  --ghat-w: max(420px, calc((100lvh - 184px - env(safe-area-inset-top, 0px)) * 0.8038));
   width: 100%;
   position: relative;
   margin-top: -100px; /* Transparent sky at the top of the artwork overlaps the names */
@@ -449,7 +465,10 @@ img {
    Wrapper owns position + entrance animation; the pill's opacity is driven by scroll in script.js. */
 .scroll-indicator {
   position: absolute;
-  bottom: 24px;
+  /* Lift above the home indicator, and above Safari's toolbar: the hero is
+     sized to the large viewport, so (lvh - svh) is the space the bars cover. */
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(24px + max(env(safe-area-inset-bottom, 0px), 100lvh - 100svh));
   left: 50%;
   transform: translateX(-50%);
   z-index: 20; /* Keep on top of ghat fade overlay */
@@ -509,6 +528,10 @@ img {
 /* ---- Welcome Animations (staggered entrance + sway loops) ---- */
 
 /* Containers handle the ENTRANCE transitions (slide/sweep/fade) */
+.welcome-screen.animate .layer-top-border {
+  animation: slideDownFade 500ms var(--ease-soft-bounce) 0ms forwards;
+}
+
 .welcome-screen.animate .layer-top-floral-garland {
   animation: slideDownFade 600ms var(--ease-soft-bounce) 100ms forwards;
 }
@@ -1113,7 +1136,7 @@ img {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 32.5px 56px;
+  padding: 30px 32.5px calc(56px + env(safe-area-inset-bottom, 0px));
   text-align: center;
 }
 
