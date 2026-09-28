@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28k"; }
+:root { --build: "2026-09-28l"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -647,8 +647,11 @@ html.scroll-lock body {
      river) fits on screen: shrinks on short phones (e.g. iPhone Safari with its bars),
      grows on very tall screens. Artwork starts 184px down; aspect is 1200:1493.
      Never narrower than 420px so it always covers the 412px column. */
-  --ghat-w: max(420px, calc((100vh + var(--hero-bleed) - 184px - env(safe-area-inset-top, 0px)) * 0.8038));
-  --ghat-w: max(420px, calc((100lvh + var(--hero-bleed) - 184px - env(safe-area-inset-top, 0px)) * 0.8038));
+  /* The intro video's picture is this artwork at 142.59% (centred), so sizing
+     the ghat to 142.59% of the column makes the video exactly fill the width.
+     On very tall screens the height rule wins so the river still reaches the bottom. */
+  --ghat-w: max(calc(min(100vw, 412px) * 1.4259), calc((100vh + var(--hero-bleed) - 184px - env(safe-area-inset-top, 0px)) * 0.8038));
+  --ghat-w: max(calc(min(100vw, 412px) * 1.4259), calc((100lvh + var(--hero-bleed) - 184px - env(safe-area-inset-top, 0px)) * 0.8038));
   width: 100%;
   position: relative;
   margin-top: -100px; /* Transparent sky at the top of the artwork overlaps the names */

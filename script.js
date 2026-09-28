@@ -33,12 +33,12 @@
     'assets/door_frame.webp',
     'assets/door_left.webp',
     'assets/door_right.webp',
-    'assets/top_floral_garland.webp?v=2026-09-28k',
-    'assets/bouquet_corner_left.png?v=2026-09-28k',
-    'assets/bouquet_corner_right.png?v=2026-09-28k',
-    'assets/banana_leaf_left.png?v=2026-09-28k',
-    'assets/banana_leaf_right.png?v=2026-09-28k',
-    'assets/center_motif.png?v=2026-09-28k',
+    'assets/top_floral_garland.webp?v=2026-09-28l',
+    'assets/bouquet_corner_left.png?v=2026-09-28l',
+    'assets/bouquet_corner_right.png?v=2026-09-28l',
+    'assets/banana_leaf_left.png?v=2026-09-28l',
+    'assets/banana_leaf_right.png?v=2026-09-28l',
+    'assets/center_motif.png?v=2026-09-28l',
     'assets/ghat_illustration.webp'
   ];
 
