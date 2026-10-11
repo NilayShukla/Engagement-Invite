@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-10-11b"; }
+:root { --build: "2026-10-11c"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -1665,7 +1665,7 @@ html.mode-details .welcome-screen {
   position: relative;
   flex: 1;
   max-width: 156px;
-  padding: 48px 12px 22px;
+  padding: 48px 8px 22px;
   border-radius: 999px 999px 12px 12px;
   background: linear-gradient(180deg, #FCF6EA 0%, #FAF0DD 100%);
   /* Double keyline like a printed invitation card */
@@ -1721,14 +1721,22 @@ html.mode-details .welcome-screen {
   opacity: 0.65;
 }
 
+/* One option per line; sized so the longest ("Shirt & Trousers") stays on
+   one line from 320px phones up */
 .dress-title {
   margin-top: 6px;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 24px;
-  line-height: 27px;
+  font-size: 20px;
+  line-height: 24px;
   letter-spacing: -0.6px;
   color: var(--ink-blue);
+}
+
+.dress-title span { display: block; }
+
+@media (max-width: 370px) {
+  .dress-title { font-size: 19px; line-height: 23px; }
 }
 
 /* Banana leaves peeking in from the sides, swaying like the arch page's */
@@ -1781,7 +1789,6 @@ html.mode-details .welcome-screen {
 
 @media (max-width: 340px) {
   .dress-cards { gap: 10px; }
-  .dress-title { font-size: 21px; line-height: 24px; }
 }
 
 /* -- Venue + map (continues below the arch band) -- */
