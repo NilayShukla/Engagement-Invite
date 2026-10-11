@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-10-11a"; }
+:root { --build: "2026-10-11b"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -99,14 +99,21 @@ img {
   display: block;
 }
 
-/* Artwork stays in the page: no Save / Copy image sheet on long press (iOS),
-   no selecting or dragging it out. Android and desktop get their context
-   menu blocked in script.js. */
+/* Artwork stays in the page: no Save to Photos / Copy sheet on long press,
+   no selecting or dragging it out. Newer iOS shows that sheet despite
+   -webkit-touch-callout, so images, the intro video and its canvas also
+   take no touches at all: a long press lands on the page behind them, which
+   has no image to offer. (Taps and swipes are all handled by containers,
+   buttons and the window, never by the artwork itself.) Android and
+   desktop get their context menu blocked in script.js as well. */
 img, video, canvas, svg {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
   -webkit-user-drag: none;
+}
+img, video, canvas {
+  pointer-events: none;
 }
 
 /* ================================================
