@@ -913,6 +913,17 @@
   }
   setupCalendarButton();
 
+  // ---- Artwork stays in the page ----
+  // A long press (Android) or right-click (desktop) on an image, the intro
+  // video or its canvas raises contextmenu, which would offer Save / Download
+  // image; dragging would pull the file out. iOS is covered by
+  // -webkit-touch-callout in style.css.
+  ['contextmenu', 'dragstart'].forEach(function (type) {
+    document.addEventListener(type, function (e) {
+      if (e.target.closest && e.target.closest('img, video, canvas, svg')) e.preventDefault();
+    });
+  });
+
   // ---- Boot ----
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

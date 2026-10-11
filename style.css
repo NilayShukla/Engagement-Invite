@@ -34,7 +34,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-09-28zd"; }
+:root { --build: "2026-10-11a"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -97,6 +97,16 @@ img {
   max-width: 100%;
   height: auto;
   display: block;
+}
+
+/* Artwork stays in the page: no Save / Copy image sheet on long press (iOS),
+   no selecting or dragging it out. Android and desktop get their context
+   menu blocked in script.js. */
+img, video, canvas, svg {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 /* ================================================
