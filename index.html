@@ -2,7 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" id="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <script>
+    /* Tablets: every page is one phone-width column laid out for phone
+       proportions, so a tall tablet screen turns it into a narrow strip
+       (doors cropped, a gap on the hero). Zoom the whole page so the screen
+       is about PHONE_HEIGHT CSS px tall: the column then looks like a big
+       phone. Phones (shorter side under 600px) and desktops (which ignore
+       the viewport tag) are untouched. */
+    (function () {
+      var meta = document.getElementById('viewport');
+      var PHONE_HEIGHT = 860;   // CSS px of height the phone design is laid out for
+      var BROWSER_CHROME = 110; // Safari's address and tab bars, roughly
+      var scale = 1;
+      function fit() {
+        var shortSide = Math.min(screen.width, screen.height);
+        if (shortSide < 600) return;
+        var longSide = Math.max(screen.width, screen.height);
+        var portrait = window.matchMedia('(orientation: portrait)').matches;
+        var s = Math.round(((portrait ? longSide : shortSide) - BROWSER_CHROME) / PHONE_HEIGHT * 100) / 100;
+        if (s < 1.1) s = 1; // close enough to phone proportions already
+        if (s === scale) return;
+        scale = s;
+        // The width has to shrink with the zoom: with width=device-width the
+        // page stays full-width and the zoom would only magnify part of it
+        var width = s === 1 ? 'device-width' : Math.round((portrait ? shortSide : longSide) / s);
+        meta.setAttribute('content', 'width=' + width + ', initial-scale=' + s + ', minimum-scale=' + s +
+          ', maximum-scale=' + s + ', user-scalable=no, viewport-fit=cover');
+      }
+      fit();
+      window.matchMedia('(orientation: portrait)').addEventListener('change', fit);
+    })();
+  </script>
   <!-- Home-screen (standalone) mode: draw under a translucent status bar -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
