@@ -12,10 +12,10 @@
   --text-dark: #372A22;
   --gold-glow: rgba(212, 175, 55, 0.08);
 
-  /* Martel / Mukta only draw the Devanagari of the Hindi version: Latin
-     letters and numbers always come from Cormorant / Jost */
+  /* Martel / Poppins only draw Devanagari here (the क on the language
+     switch); the Hindi version puts them first, see HINDI at the end */
   --font-display: 'Cormorant Garamond', 'Martel', 'Georgia', serif;
-  --font-body: 'Jost', 'Mukta', 'Segoe UI', sans-serif;
+  --font-body: 'Jost', 'Poppins', 'Segoe UI', sans-serif;
 
   /* Easing curves */
   --ease-elegant: cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -36,7 +36,7 @@
 }
 
 /* Build marker (shown by ?debug) — confirms the phone isn't using a cached stylesheet */
-:root { --build: "2026-10-12a"; }
+:root { --build: "2026-10-12b"; }
 
 /* ?debug: page background turns cyan (the hero column keeps its cream), so any
    strip Safari paints with the "page background" rather than content shows cyan */
@@ -523,7 +523,7 @@ html.scroll-lock body {
   border-radius: 999px;
   background: transparent;
   color: #FFFFFF;
-  font-family: 'Jost', 'Mukta', sans-serif;
+  font-family: 'Jost', 'Poppins', sans-serif;
   font-weight: 500;
   font-size: 15px;
   line-height: 1;
@@ -2037,20 +2037,28 @@ html.mode-details .welcome-screen {
 
 /* Letter-spacing tuned for Latin breaks up Devanagari's joined headline
    (shirorekha), and it has no capitals to transform */
-/* Hindi uses the Devanagari faces for everything, numbers included, so
-   "16 अक्टूबर, 2026" doesn't mix two typefaces */
+/* Hindi keeps the English page's look: Martel is the Devanagari
+   counterpart of Cormorant (bold, high-contrast serif, old-style numbers)
+   and Poppins of Jost (geometric sans). The date's numbers stay in
+   Cormorant's old-style figures, at the English size (.num). */
 html[lang="hi"] {
   --font-display: 'Martel', 'Cormorant Garamond', 'Georgia', serif;
-  --font-body: 'Mukta', 'Jost', 'Segoe UI', sans-serif;
+  --font-body: 'Poppins', 'Jost', 'Segoe UI', sans-serif;
 }
 
-/* Martel's letters stand much larger than Cormorant's at the same size */
-html[lang="hi"] .couple-name { font-size: 38px; line-height: 58.128px; }
-html[lang="hi"] .date-day    { font-size: 20px; }
-html[lang="hi"] .date-main   { font-size: 26px; }
-html[lang="hi"] .date-time   { font-size: 20px; }
-html[lang="hi"] .venue-title { font-size: 23px; }
-html[lang="hi"] .dress-title { font-size: 18px; }
+/* Devanagari stands taller than Latin at the same size: these sizes give
+   each line the same visual weight as its English counterpart */
+html[lang="hi"] .welcome-names { font-size: 42px; }
+html[lang="hi"] .couple-name   { font-size: 40px; line-height: 58.128px; }
+html[lang="hi"] .date-day      { font-size: 22px; }
+html[lang="hi"] .date-main     { font-size: 30px; }
+html[lang="hi"] .date-time     { font-size: 22px; }
+html[lang="hi"] .venue-title   { font-size: 23px; }
+html[lang="hi"] .dress-title   { font-size: 18px; }
+html[lang="hi"] .num {
+  font-family: 'Cormorant Garamond', 'Georgia', serif;
+  font-size: 1.13em; /* 30px date -> 34px figures, as in English */
+}
 
 html[lang="hi"] :is(.welcome-subtitle, .welcome-names, .blessing, .couple-name, .divider-text,
   .date-day, .date-main, .date-time, .calendar-btn, .dress-label, .dress-who, .dress-title,
