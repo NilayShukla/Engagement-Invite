@@ -67,7 +67,8 @@
   <!-- Preconnect for fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Martel and Mukta carry the Devanagari for the Hindi version; their files only download when Hindi text is on screen -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=Jost:wght@400;500&family=Martel:wght@700&family=Mukta:wght@400;500&display=swap" rel="stylesheet">
 
   <!-- Preload critical images -->
   <link rel="preload" as="image" href="assets/ganesh_text.png">
@@ -77,7 +78,7 @@
   <link rel="preload" as="image" href="assets/top_floral_garland.webp?v=2026-09-28y">
   <link rel="preload" as="image" href="assets/ghat_illustration.webp">
 
-  <link rel="stylesheet" href="style.css?v=2026-10-11c">
+  <link rel="stylesheet" href="style.css?v=2026-10-12a">
 </head>
 <body>
 
@@ -155,6 +156,11 @@
       </g>
     </svg>
   </button>
+  <!-- English / Hindi switch, left of the mute button; script.js swaps the text -->
+  <div class="lang-toggle" id="langToggle" role="group" aria-label="Language / भाषा">
+    <button type="button" class="lang-option" data-lang="en" lang="en" aria-pressed="true" aria-label="English">A</button>
+    <button type="button" class="lang-option" data-lang="hi" lang="hi" aria-pressed="false" aria-label="हिन्दी">क</button>
+  </div>
 
   <!-- Welcome / Main Hero Screen -->
   <!-- One phone-width column holds every page, so desktop renders exactly like mobile -->
@@ -333,6 +339,6 @@
   </main>
 
   <script src="analytics.js?v=2026-09-28zb"></script>
-  <script src="script.js?v=2026-10-11a"></script>
+  <script src="script.js?v=2026-10-12a"></script>
 </body>
 </html>

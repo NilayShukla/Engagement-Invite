@@ -275,6 +275,97 @@
   }
 
   /**
+   * English / Hindi (the A | क switch left of the mute button).
+   *
+   * index.html holds the English; HINDI gives each element's Hindi markup.
+   * Switching swaps the text in place (no reload, animations untouched),
+   * sets <html lang> so style.css drops the Latin letter-spacing and the
+   * font stacks draw Devanagari, and remembers the choice. A first visit
+   * follows the browser's language.
+   */
+  var LANG_KEY = 'inviteLang';
+  var HINDI = [
+    ['#openInvite', 'टैप करके खोलें'],
+    ['#introSkip', 'छोड़ें'],
+    ['.welcome-subtitle', 'दो परिवार, एक उत्सव'],
+    ['.welcome-names', 'शुभ सगाई'],
+    ['.scroll-text', 'स्क्रॉल करें'],
+    ['.blessing-1', 'ईश्वर की असीम कृपा एवं<br>बड़ों के आशीर्वाद से'],
+    ['.blessing-2', 'हम आपको सादर आमंत्रित करते हैं<br>शुभ सगाई समारोह में'],
+    ['.couple-name-first', 'निलय'],
+    ['.couple-name-second', 'अनन्या'],
+    ['.date-divider .divider-text', 'दिनांक'],
+    ['.date-day', 'शुक्रवार'],
+    ['.date-main', '16 अक्टूबर, 2026'],
+    ['.date-time', 'प्रातः 10:00 बजे'],
+    ['#calendarBtn span', 'कैलेंडर में जोड़ें'],
+    ['.dress-label', 'वेशभूषा'],
+    ['.dress-card:nth-child(1) .dress-who', 'महिलाएँ'],
+    ['.dress-card:nth-child(1) .dress-title', '<span>साड़ी,</span> <span>लहंगा या</span> <span>कुर्ता सलवार</span>'],
+    ['.dress-card:nth-child(2) .dress-who', 'पुरुष'],
+    ['.dress-card:nth-child(2) .dress-title', '<span>कुर्ता,</span> <span>बंदगला या</span> <span>शर्ट और पतलून</span>'],
+    ['.venue-label', 'स्थान'],
+    ['.venue-title', 'रॉयल कैफ़े, हज़रतगंज, लखनऊ']
+  ];
+  var HINDI_ATTRS = [
+    ['.couple-names', 'aria-label', 'निलय और अनन्या'],
+    ['.couple-illustration', 'alt', 'निलय और अनन्या का चित्र'],
+    ['#scrollPill', 'aria-label', 'निमंत्रण विवरण पर जाएँ']
+  ];
+  var langToggle = document.getElementById('langToggle');
+  var lang = 'en';
+
+  // The English versions, read from the page before anything is swapped
+  var englishText = HINDI.map(function (e) {
+    var el = document.querySelector(e[0]);
+    return el ? el.innerHTML : null;
+  });
+  var englishAttrs = HINDI_ATTRS.map(function (e) {
+    var el = document.querySelector(e[0]);
+    return el ? el.getAttribute(e[1]) : null;
+  });
+
+  // Pick the string for the current language
+  function t(en, hi) { return lang === 'hi' ? hi : en; }
+
+  function applyLanguage(next) {
+    lang = next;
+    var hi = next === 'hi';
+    document.documentElement.lang = hi ? 'hi' : 'en';
+    HINDI.forEach(function (e, i) {
+      var el = document.querySelector(e[0]);
+      if (el && englishText[i] !== null) el.innerHTML = hi ? e[1] : englishText[i];
+    });
+    HINDI_ATTRS.forEach(function (e, i) {
+      var el = document.querySelector(e[0]);
+      if (el && englishAttrs[i] !== null) el.setAttribute(e[1], hi ? e[2] : englishAttrs[i]);
+    });
+    if (langToggle) {
+      langToggle.querySelectorAll('.lang-option').forEach(function (btn) {
+        btn.setAttribute('aria-pressed', btn.getAttribute('data-lang') === next ? 'true' : 'false');
+      });
+    }
+    analytics.register({ language: next });
+  }
+
+  function initLanguage() {
+    var saved = null;
+    try { saved = localStorage.getItem(LANG_KEY); } catch (e) { /* storage blocked */ }
+    var browserHindi = (navigator.languages || [navigator.language || '']).some(function (l) { return /^hi\b/i.test(l); });
+    applyLanguage(saved === 'hi' || saved === 'en' ? saved : (browserHindi ? 'hi' : 'en'));
+
+    if (!langToggle) return;
+    langToggle.addEventListener('click', function (e) {
+      var btn = e.target.closest('.lang-option');
+      if (!btn || btn.getAttribute('data-lang') === lang) return;
+      applyLanguage(btn.getAttribute('data-lang'));
+      try { localStorage.setItem(LANG_KEY, lang); } catch (err) { /* storage blocked */ }
+      renderMusicToggle(); // its label is in the current language
+      analytics.track('language_changed', { to: lang, state: analytics.currentState() });
+    });
+  }
+
+  /**
    * Background music + the mute button (top right).
    *
    * iOS only lets audio play from a tap, so "Tap to open" briefly plays and
@@ -372,7 +463,7 @@
     var off = musicMuted || !musicStarted || music.paused;
     musicToggle.classList.toggle('is-muted', off);
     musicToggle.setAttribute('aria-pressed', off ? 'true' : 'false');
-    musicToggle.setAttribute('aria-label', off ? 'Play music' : 'Mute music');
+    musicToggle.setAttribute('aria-label', off ? t('Play music', 'संगीत चलाएँ') : t('Mute music', 'संगीत बंद करें'));
     analytics.music(!off);
   }
 
@@ -411,6 +502,7 @@
     musicStarted = true;
     musicStartedAt = performance.now();
     if (musicToggle) musicToggle.classList.add('is-visible');
+    if (langToggle) langToggle.classList.add('is-visible');
     if (!musicMuted) {
       try { music.currentTime = 0; } catch (e) { /* not loaded yet */ }
       playMusic(MUSIC_FADE_IN, function (ok) {
@@ -880,6 +972,7 @@
    */
   function init() {
     initDebug();
+    initLanguage();
     initMusic();
     setupIntroVideo();
     initPageTurn();
