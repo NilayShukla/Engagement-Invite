@@ -390,6 +390,7 @@ let totalBytes = 0;
 let doneCount = 0;
 let failCount = 0;
 let folderName = "";
+let startMode = "start";   // "add" once a batch has finished and the button invites more
 let samples = [];
 let started = 0;
 
@@ -514,44 +515,45 @@ el.changeWho.addEventListener("click", () => {
  * Chrome gives <input type="file"> its own dialog, titled "Choose Files to
  * Upload" with an Upload button, and a page cannot change that wording. The
  * File System Access API opens the plain system panel instead, which reads
- * Open. Browsers without it fall back to the hidden inputs below.
+ * Open. Browsers without it fall back to the hidden inputs.
+ *
+ * The fallback is chosen up front, never after the panel has already been
+ * tried: clicking a file input once the original gesture has been awaited
+ * away leaves a picker queued, which then springs open on an unrelated click
+ * later on.
  */
-el.pickFiles.addEventListener("click", async () => {
-  if (window.showOpenFilePicker) {
-    try {
-      const handles = await window.showOpenFilePicker({ multiple: true });
-      addFiles(await Promise.all(handles.map((h) => h.getFile())));
-      return;
-    } catch (err) {
-      if (err && err.name === "AbortError") return;   // they pressed Cancel
-      // anything else: fall through to the classic picker
-    }
+async function openFilePicker() {
+  if (!window.showOpenFilePicker) { el.fileInput.click(); return; }
+  try {
+    const handles = await window.showOpenFilePicker({ multiple: true });
+    addFiles(await Promise.all(handles.map((h) => h.getFile())));
+  } catch (err) {
+    if (err && err.name === "AbortError") return;   // they pressed Cancel
+    setBanner(el.errBanner, "The file picker could not open. Drag the files in instead.");
   }
-  el.fileInput.click();
-});
+}
 
-el.pickFolder.addEventListener("click", async () => {
-  if (window.showDirectoryPicker) {
-    let dir;
-    try {
-      dir = await window.showDirectoryPicker({ mode: "read" });
-    } catch (err) {
-      if (err && err.name === "AbortError") return;
-      dir = null;
-    }
-    if (dir) {
-      const quiet = !el.netBanner.classList.contains("on");
-      if (quiet) setBanner(el.netBanner, "Reading the folder.");
-      try {
-        addFiles(await readDirectory(dir));
-      } finally {
-        if (quiet) clearBanner(el.netBanner);
-      }
-      return;
-    }
+async function openFolderPicker() {
+  if (!window.showDirectoryPicker) { el.dirInput.click(); return; }
+  let dir;
+  try {
+    dir = await window.showDirectoryPicker({ mode: "read" });
+  } catch (err) {
+    if (err && err.name === "AbortError") return;
+    setBanner(el.errBanner, "The folder picker could not open. Drag the folder in instead.");
+    return;
   }
-  el.dirInput.click();
-});
+  const quiet = !el.netBanner.classList.contains("on");
+  if (quiet) setBanner(el.netBanner, "Reading the folder.");
+  try {
+    addFiles(await readDirectory(dir));
+  } finally {
+    if (quiet) clearBanner(el.netBanner);
+  }
+}
+
+el.pickFiles.addEventListener("click", openFilePicker);
+el.pickFolder.addEventListener("click", openFolderPicker);
 
 /** Walks a chosen directory handle, subfolders included. */
 async function readDirectory(dir) {
@@ -569,15 +571,6 @@ async function readDirectory(dir) {
   }
   return out;
 }
-
-el.fileInput.addEventListener("change", () => {
-  addFiles(Array.from(el.fileInput.files));
-  el.fileInput.value = "";
-});
-el.dirInput.addEventListener("change", () => {
-  addFiles(Array.from(el.dirInput.files));
-  el.dirInput.value = "";
-});
 
 ["dragenter", "dragover"].forEach((t) =>
   el.drop.addEventListener(t, (e) => { e.preventDefault(); el.drop.classList.add("over"); })
@@ -665,6 +658,11 @@ function addFiles(files) {
   appendRows(fresh);
   el.listPanel.classList.add("on");
   refreshQueueInfo();
+  if (!running) {
+    startMode = "start";
+    el.start.textContent = "Start upload";
+    clearBanner(el.okBanner);
+  }
   el.start.disabled = running || !items.some((i) => i.status === "queued");
   if (running) schedule();   // anything added mid run joins the queue
 }
@@ -1092,6 +1090,13 @@ async function uploadOne(item) {
   refreshQueueInfo();
 }
 
+/** After a batch, the main button stops being Start and becomes the way to add more. */
+function offerMoreFiles() {
+  startMode = "add";
+  el.start.textContent = "Add more files";
+  el.start.disabled = false;
+}
+
 function failItem(item, message) {
   item.status = "failed";
   item.error = message;
@@ -1175,18 +1180,19 @@ function finishRun() {
   paintSummary(committed, 0);
 
   const failed = items.filter((i) => i.status === "failed");
+  offerMoreFiles();
+
   if (failed.length) {
     el.retry.hidden = false;
-    el.start.disabled = true;
     setBanner(el.errBanner, plural(failed.length, "file") +
       " did not finish. Press Retry failed, and each one continues from where it stopped.");
   } else {
     clearBanner(el.errBanner);
     el.retry.hidden = true;
-    el.start.disabled = true;
     setBanner(el.okBanner, "All done. " + plural(doneCount, "file") +
       " (" + fmtBytes(committed) + ") are in Drive" +
-      (folderName ? ", in " + folderName + "." : "."));
+      (folderName ? ", in " + folderName + ". " : ". ") +
+      "Have more to send? Press Add more files, or drag them in.");
   }
   refreshQueueInfo();
 }
@@ -1194,6 +1200,7 @@ function finishRun() {
 /* ============================================================== controls */
 
 function beginRun() {
+  startMode = "start";
   el.summary.classList.add("on");
   el.pause.hidden = false;
   el.pause.textContent = "Pause";
@@ -1213,9 +1220,17 @@ function beginRun() {
 }
 
 el.start.addEventListener("click", () => {
+  const queued = items.some((i) => i.status === "queued");
+
+  // After a finished batch the button is the invitation to send another one.
+  if (startMode === "add" && !queued) {
+    openFilePicker();
+    return;
+  }
+
   clearBanner(el.errBanner);
   clearBanner(el.okBanner);
-  if (!items.some((i) => i.status === "queued")) {
+  if (!queued) {
     setBanner(el.errBanner, "Choose some files first.");
     return;
   }
