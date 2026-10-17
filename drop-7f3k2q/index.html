@@ -526,52 +526,13 @@ el.changeWho.addEventListener("click", () => {
 
 /* ============================================================== choosing files */
 
-/**
- * Chrome gives <input type="file"> its own dialog, titled "Choose Files to
- * Upload" with an Upload button, and a page cannot change that wording. The
- * File System Access API opens the plain system panel instead, which reads
- * Open. Browsers without it fall back to the hidden inputs.
- *
- * The fallback is chosen up front, never after the panel has already been
- * tried: clicking a file input once the original gesture has been awaited
- * away leaves a picker queued, which then springs open on an unrelated click
- * later on.
- */
-async function openFilePicker() {
-  if (!window.showOpenFilePicker) { el.fileInput.click(); return; }
-  try {
-    const handles = await window.showOpenFilePicker({ multiple: true });
-    addFiles(await Promise.all(handles.map((h) => h.getFile())));
-  } catch (err) {
-    if (err && err.name === "AbortError") return;   // they pressed Cancel
-    setBanner(el.errBanner, "The file picker could not open. Drag the files in instead.");
-  }
-}
+// Chrome titles this dialog "Choose Files to Upload" and labels its button
+// Upload. That wording belongs to the browser and a page cannot change it;
+// the File System Access API was tried here and made no difference, so this
+// stays as the plain input. Dragging files in avoids the dialog altogether.
+el.pickFiles.addEventListener("click", () => el.fileInput.click());
+el.pickFolder.addEventListener("click", () => el.dirInput.click());
 
-async function openFolderPicker() {
-  if (!window.showDirectoryPicker) { el.dirInput.click(); return; }
-  let dir;
-  try {
-    dir = await window.showDirectoryPicker({ mode: "read" });
-  } catch (err) {
-    if (err && err.name === "AbortError") return;
-    setBanner(el.errBanner, "The folder picker could not open. Drag the folder in instead.");
-    return;
-  }
-  const quiet = !el.netBanner.classList.contains("on");
-  if (quiet) setBanner(el.netBanner, "Reading the folder.");
-  try {
-    addFiles(await readDirectory(dir));
-  } finally {
-    if (quiet) clearBanner(el.netBanner);
-  }
-}
-
-el.pickFiles.addEventListener("click", openFilePicker);
-el.pickFolder.addEventListener("click", openFolderPicker);
-
-// The hidden inputs hand their files over here. Without these, a browser on
-// the fallback path opens a picker and then appears to do nothing at all.
 el.fileInput.addEventListener("change", () => {
   addFiles(Array.from(el.fileInput.files));
   el.fileInput.value = "";
@@ -580,23 +541,6 @@ el.dirInput.addEventListener("change", () => {
   addFiles(Array.from(el.dirInput.files));
   el.dirInput.value = "";
 });
-
-/** Walks a chosen directory handle, subfolders included. */
-async function readDirectory(dir) {
-  const out = [];
-  const stack = [dir];
-  while (stack.length) {
-    const here = stack.pop();
-    for await (const entry of here.values()) {
-      if (entry.kind === "file") {
-        try { out.push(await entry.getFile()); } catch (err) { /* skip unreadable */ }
-      } else if (entry.kind === "directory") {
-        stack.push(entry);
-      }
-    }
-  }
-  return out;
-}
 
 ["dragenter", "dragover"].forEach((t) =>
   el.drop.addEventListener(t, (e) => { e.preventDefault(); el.drop.classList.add("over"); })
@@ -1216,7 +1160,7 @@ function finishRun() {
     clearBanner(el.errBanner);
     el.retry.hidden = true;
     setBanner(el.okBanner, "All done. " + plural(doneCount, "file") +
-      " (" + fmtBytes(committed) + ") are in Drive" +
+      " (" + fmtBytes(committed) + ") " + (doneCount === 1 ? "is" : "are") + " in Drive" +
       (folderName ? ", in " + folderName + ". " : ". ") +
       "Have more to send? Press Add more files, or drag them in.");
   }
@@ -1250,7 +1194,7 @@ el.start.addEventListener("click", () => {
 
   // After a finished batch the button is the invitation to send another one.
   if (startMode === "add" && !queued) {
-    openFilePicker();
+    el.fileInput.click();
     return;
   }
 
