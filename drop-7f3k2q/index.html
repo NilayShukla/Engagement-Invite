@@ -144,6 +144,8 @@
   #drop .big { font-size: 15px; font-weight: 550; margin-bottom: 4px; }
   #drop .hint { color: var(--muted); font-size: 13px; }
   .pickers { margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .pickers button { display: inline-flex; align-items: center; gap: 8px; }
+  .pickers svg { flex: none; opacity: .7; }
 
   .actions {
     display: flex; gap: 10px; align-items: center;
@@ -280,8 +282,21 @@
         <div class="big">Drag files or folders here</div>
         <div class="hint">Hundreds at a time is fine. Nothing starts until you press Start.</div>
         <div class="pickers">
-          <button id="pickFiles" type="button">Choose files</button>
-          <button id="pickFolder" type="button">Choose a folder</button>
+          <button id="pickFiles" type="button">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M9.4 1.6H4.3c-.9 0-1.6.7-1.6 1.6v9.6c0 .9.7 1.6 1.6 1.6h7.4c.9 0 1.6-.7 1.6-1.6V5.6L9.4 1.6Z"
+                    stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+              <path d="M9.4 1.6v4h4" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+            </svg>
+            Choose files
+          </button>
+          <button id="pickFolder" type="button">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2 4.2c0-.9.7-1.6 1.6-1.6h2.2c.4 0 .8.2 1.1.5l1.3 1.3h4.2c.9 0 1.6.7 1.6 1.6v6c0 .9-.7 1.6-1.6 1.6H3.6c-.9 0-1.6-.7-1.6-1.6V4.2Z"
+                    stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+            </svg>
+            Choose a folder
+          </button>
         </div>
       </div>
       <input id="fileInput" type="file" multiple hidden>
@@ -554,6 +569,17 @@ async function openFolderPicker() {
 
 el.pickFiles.addEventListener("click", openFilePicker);
 el.pickFolder.addEventListener("click", openFolderPicker);
+
+// The hidden inputs hand their files over here. Without these, a browser on
+// the fallback path opens a picker and then appears to do nothing at all.
+el.fileInput.addEventListener("change", () => {
+  addFiles(Array.from(el.fileInput.files));
+  el.fileInput.value = "";
+});
+el.dirInput.addEventListener("change", () => {
+  addFiles(Array.from(el.dirInput.files));
+  el.dirInput.value = "";
+});
 
 /** Walks a chosen directory handle, subfolders included. */
 async function readDirectory(dir) {
