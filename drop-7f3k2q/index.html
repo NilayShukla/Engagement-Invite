@@ -143,6 +143,13 @@
   #drop.over { border-color: var(--accent); background: var(--accent-soft); }
   #drop .big { font-size: 15px; font-weight: 550; margin-bottom: 4px; }
   #drop .hint { color: var(--muted); font-size: 13px; }
+  #drop .dz-busy { display: none; }
+
+  /* Once a run is under way the zone steps back: the queue is the thing to watch. */
+  #drop.compact { padding: 16px 20px; }
+  #drop.compact .dz-idle { display: none; }
+  #drop.compact .dz-busy { display: block; }
+  #drop.compact .pickers { margin-top: 12px; }
   .pickers { margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .pickers button { display: inline-flex; align-items: center; gap: 8px; }
   .pickers svg { flex: none; opacity: .7; }
@@ -279,8 +286,13 @@
 
     <div class="panel">
       <div id="drop">
-        <div class="big">Drag files or folders here</div>
-        <div class="hint">Hundreds at a time is fine. Nothing starts until you press Start.</div>
+        <div class="dz-idle">
+          <div class="big">Drag files or folders here</div>
+          <div class="hint">Hundreds at a time is fine. Nothing starts until you press Start.</div>
+        </div>
+        <div class="dz-busy">
+          <div class="hint">Need to add more files? Select them and they will be added to the end of the queue.</div>
+        </div>
         <div class="pickers">
           <button id="pickFiles" type="button">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -1178,6 +1190,7 @@ function finishRun() {
 
 function beginRun() {
   startMode = "start";
+  el.drop.classList.add("compact");
   el.summary.classList.add("on");
   el.pause.hidden = false;
   el.pause.textContent = "Pause";
