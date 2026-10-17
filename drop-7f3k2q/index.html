@@ -598,8 +598,15 @@ async function collectEntries(roots) {
 }
 
 function addFiles(files) {
+  // The browser hands files over in whatever order the folder listing had,
+  // and a dropped folder arrives breadth first, so subfolders trail the rest.
+  // Sort each batch by name instead, numerically, so IMG_9 precedes IMG_10.
+  const incoming = Array.from(files).sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" })
+  );
+
   const fresh = [];
-  for (const f of files) {
+  for (const f of incoming) {
     const key = f.name + "|" + f.size + "|" + (f.lastModified || 0);
     if (seen.has(key)) continue;
     seen.add(key);
