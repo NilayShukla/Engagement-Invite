@@ -1,0 +1,1183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<meta name="googlebot" content="noindex, nofollow">
+<!-- Keeps this page's secret path out of the Referer header on uploads. -->
+<meta name="referrer" content="no-referrer">
+<title>Photo Drop</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f6f6f7;
+    --panel: #ffffff;
+    --panel-2: #fbfbfc;
+    --line: #e2e2e6;
+    --line-soft: #ededf1;
+    --text: #17171a;
+    --muted: #6c6c78;
+    --faint: #9a9aa6;
+    --accent: #2f6df0;
+    --accent-soft: #e8efff;
+    --ok: #1a8a4a;
+    --warn: #b06a00;
+    --err: #c03030;
+    --track: #e8e8ed;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121214;
+      --panel: #1b1b1f;
+      --panel-2: #202026;
+      --line: #32323a;
+      --line-soft: #28282f;
+      --text: #ececf0;
+      --muted: #9f9fab;
+      --faint: #72727e;
+      --accent: #6c9bff;
+      --accent-soft: #1e2a45;
+      --ok: #4fc47f;
+      --warn: #e0a24b;
+      --err: #ff7b7b;
+      --track: #2b2b33;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 28px 24px 64px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  /* ================= gate dialog ================= */
+
+  dialog#gate {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--panel);
+    color: var(--text);
+    padding: 0;
+    width: min(420px, calc(100vw - 32px));
+    box-shadow: 0 24px 60px rgba(0,0,0,.22);
+  }
+  dialog#gate::backdrop { background: rgba(10,10,14,.55); backdrop-filter: blur(3px); }
+  .gate-inner { padding: 26px 26px 22px; }
+  .gate-inner h1 { font-size: 19px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .gate-inner p { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+  .gate-inner .field { margin-bottom: 14px; }
+  #gateError {
+    display: none; color: var(--err); font-size: 13.5px; margin: 0 0 12px;
+  }
+  #gateError.on { display: block; }
+
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  input[type=text], input[type=password] {
+    width: 100%; padding: 10px 12px; font: inherit; color: var(--text);
+    background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 8px; outline: none;
+  }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  button {
+    font: inherit; font-weight: 550; padding: 9px 16px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--panel);
+    color: var(--text); cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--faint); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover:not(:disabled) { filter: brightness(1.07); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.wide { width: 100%; padding: 11px 16px; margin-top: 6px; }
+  button.link {
+    border: 0; background: none; padding: 0; color: var(--accent);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+
+  /* ================= main view ================= */
+
+  #app { display: none; }
+  #app.on { display: block; }
+
+  .topbar {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 22px; flex-wrap: wrap;
+  }
+  .topbar h1 { font-size: 20px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+  .topbar .who { color: var(--muted); font-size: 14px; }
+  .topbar .spacer { flex: 1; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .panel h2 {
+    font-size: 12px; font-weight: 650; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--faint); margin: 0 0 14px;
+  }
+
+  #drop {
+    border: 1.5px dashed var(--line); border-radius: var(--radius);
+    background: var(--panel-2); padding: 38px 20px; text-align: center;
+    transition: border-color .12s, background .12s;
+  }
+  #drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  #drop .big { font-size: 15px; font-weight: 550; margin-bottom: 4px; }
+  #drop .hint { color: var(--muted); font-size: 13px; }
+  .pickers { margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .actions .spacer { flex: 1; }
+
+  #summary { display: none; }
+  #summary.on { display: block; }
+  .stats {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 1px; background: var(--line-soft);
+    border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+    margin-top: 18px;
+  }
+  @media (max-width: 900px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat { background: var(--panel); padding: 14px 16px; }
+  .stat .k {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--faint); margin-bottom: 5px;
+  }
+  .stat .v { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .stat .v small { font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+
+  .bar { height: 8px; background: var(--track); border-radius: 99px; overflow: hidden; }
+  .bar > i {
+    display: block; height: 100%; width: 100%; background: var(--accent);
+    border-radius: 99px; transform: scaleX(0); transform-origin: left center;
+    transition: transform .18s linear;
+  }
+  .bar.done > i { background: var(--ok); }
+  .bar.bad > i { background: var(--err); }
+  #overallBar { height: 10px; margin-bottom: 10px; }
+  .overallMeta {
+    display: flex; justify-content: space-between; gap: 12px;
+    font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums;
+  }
+
+  .banner {
+    display: none; padding: 11px 14px; border-radius: 8px; font-size: 14px;
+    margin-bottom: 14px; border: 1px solid transparent;
+  }
+  .banner.on { display: block; }
+  .banner.net { background: color-mix(in srgb, var(--warn) 12%, transparent); border-color: color-mix(in srgb, var(--warn) 40%, transparent); color: var(--warn); }
+  .banner.err { background: color-mix(in srgb, var(--err) 12%, transparent); border-color: color-mix(in srgb, var(--err) 40%, transparent); color: var(--err); }
+  .banner.ok  { background: color-mix(in srgb, var(--ok) 12%, transparent);  border-color: color-mix(in srgb, var(--ok) 40%, transparent);  color: var(--ok); }
+
+  #listPanel { display: none; }
+  #listPanel.on { display: block; }
+  .thead, .row {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) 96px 170px 62px 104px 150px;
+    gap: 14px; align-items: center;
+  }
+  .thead {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--faint); padding: 0 4px 9px; border-bottom: 1px solid var(--line);
+  }
+  #list { overflow: visible; }
+  .row {
+    padding: 9px 4px; border-bottom: 1px solid var(--line-soft);
+    content-visibility: auto; contain-intrinsic-size: auto 41px;
+  }
+  .row .idx { color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
+  .row .sz, .row .pc, .row .sp {
+    font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums;
+  }
+  .row .pc { text-align: right; }
+  .row .st { font-size: 13px; }
+  .row.is-done .st { color: var(--ok); }
+  .row.is-fail .st { color: var(--err); }
+  .row.is-wait .st { color: var(--warn); }
+  .row.is-up .st { color: var(--accent); }
+  .r-align { text-align: right; }
+
+  .note { color: var(--muted); font-size: 13px; margin: 14px 0 0; }
+  .numbers { font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 860px) {
+    body { padding: 20px 14px 48px; }
+    .thead { display: none; }
+    .row {
+      grid-template-columns: 1fr 72px;
+      grid-template-areas: "nm pc" "bar bar" "st sz";
+      gap: 4px 10px; padding: 11px 2px;
+    }
+    .row .idx { display: none; }
+    .row .nm { grid-area: nm; }
+    .row .pc { grid-area: pc; }
+    .row .barcell { grid-area: bar; }
+    .row .st { grid-area: st; }
+    .row .sz { grid-area: sz; text-align: right; }
+    .row .sp { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<dialog id="gate">
+  <form class="gate-inner" id="gateForm" method="dialog">
+    <h1>Photo Drop</h1>
+    <p>Enter your name and the passcode to continue.</p>
+    <div class="field">
+      <label for="uploader">Your name</label>
+      <input id="uploader" type="text" autocomplete="name" placeholder="e.g. Ravi Photography" spellcheck="false" required>
+    </div>
+    <div class="field">
+      <label for="passcode">Passcode</label>
+      <input id="passcode" type="password" autocomplete="off" placeholder="Shared with you separately" required>
+    </div>
+    <p id="gateError"></p>
+    <button id="gateGo" class="primary wide" type="submit">Continue</button>
+  </form>
+</dialog>
+
+<div class="wrap">
+  <div id="app">
+
+    <div class="topbar">
+      <h1>Photo Drop</h1>
+      <span class="who" id="who"></span>
+      <div class="spacer"></div>
+      <button class="link" id="changeWho" type="button">Not you?</button>
+    </div>
+
+    <div class="panel">
+      <div id="drop">
+        <div class="big">Drag files or folders here</div>
+        <div class="hint">Hundreds at a time is fine. Nothing starts until you press Start.</div>
+        <div class="pickers">
+          <button id="pickFiles" type="button">Choose files</button>
+          <button id="pickFolder" type="button">Choose a folder</button>
+        </div>
+      </div>
+      <input id="fileInput" type="file" multiple hidden>
+      <input id="dirInput" type="file" multiple webkitdirectory hidden>
+
+      <div class="actions" style="margin-top:16px">
+        <button id="start" class="primary" type="button" disabled>Start upload</button>
+        <button id="pause" type="button" hidden>Pause</button>
+        <button id="retry" type="button" hidden>Retry failed</button>
+        <div class="spacer"></div>
+        <span id="queueInfo" class="note numbers" style="margin:0"></span>
+      </div>
+    </div>
+
+    <div id="netBanner" class="banner net"></div>
+    <div id="errBanner" class="banner err"></div>
+    <div id="okBanner" class="banner ok"></div>
+
+    <div id="summary" class="panel">
+      <h2>Progress</h2>
+      <div class="bar" id="overallBar"><i></i></div>
+      <div class="overallMeta">
+        <span id="overallLeft"></span>
+        <span id="overallRight"></span>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">Complete</div><div class="v" id="sPct">0%</div></div>
+        <div class="stat"><div class="k">Uploaded</div><div class="v" id="sSent">0 B</div></div>
+        <div class="stat"><div class="k">Speed</div><div class="v" id="sSpeed">0 B/s</div></div>
+        <div class="stat"><div class="k">Time left</div><div class="v" id="sEta">0s</div></div>
+        <div class="stat"><div class="k">Files</div><div class="v" id="sFiles">0</div></div>
+      </div>
+    </div>
+
+    <div id="listPanel" class="panel">
+      <h2>Queue</h2>
+      <div class="thead">
+        <div>#</div><div>File</div><div>Size</div><div>Progress</div>
+        <div class="r-align">%</div><div>Speed</div><div>Status</div>
+      </div>
+      <div id="list"></div>
+    </div>
+
+    <p class="note">Keep this tab open while uploading. If the connection drops, uploads pause and then continue from where they stopped, so nothing has to start over.</p>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================== configuration */
+
+const CONFIG = {
+  // Paste the /exec URL of your Apps Script web app deployment here.
+  WEB_APP_URL: "__PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE__",
+
+  // Must be a multiple of 256 KiB. 16 MiB suits a desktop on a decent line.
+  CHUNK_SIZE: 16 * 1024 * 1024,
+
+  // Parallel files. 3 keeps a fast line busy without starving any one upload.
+  CONCURRENCY: 3,
+
+  MAX_CHUNK_ATTEMPTS: 8,     // per chunk, before a file is marked failed
+  MAX_SESSION_RESTARTS: 3,   // if Drive forgets the session entirely
+  SPEED_WINDOW_MS: 8000,     // sliding window behind the speed figure
+  CHUNK_TIMEOUT_MS: 10 * 60 * 1000,
+};
+
+const CHUNK_ALIGN = 256 * 1024;
+if (CONFIG.CHUNK_SIZE % CHUNK_ALIGN !== 0) {
+  CONFIG.CHUNK_SIZE = Math.max(CHUNK_ALIGN, Math.round(CONFIG.CHUNK_SIZE / CHUNK_ALIGN) * CHUNK_ALIGN);
+}
+
+/* ============================================================== dom */
+
+const $ = (id) => document.getElementById(id);
+const el = {
+  gate: $("gate"), gateForm: $("gateForm"), gateGo: $("gateGo"), gateError: $("gateError"),
+  uploader: $("uploader"), passcode: $("passcode"),
+  app: $("app"), who: $("who"), changeWho: $("changeWho"),
+  drop: $("drop"), fileInput: $("fileInput"), dirInput: $("dirInput"),
+  pickFiles: $("pickFiles"), pickFolder: $("pickFolder"),
+  start: $("start"), pause: $("pause"), retry: $("retry"),
+  queueInfo: $("queueInfo"),
+  netBanner: $("netBanner"), errBanner: $("errBanner"), okBanner: $("okBanner"),
+  summary: $("summary"), listPanel: $("listPanel"), list: $("list"),
+  overallBar: $("overallBar"), overallBarFill: $("overallBar").firstElementChild,
+  overallLeft: $("overallLeft"), overallRight: $("overallRight"),
+  sPct: $("sPct"), sSent: $("sSent"), sSpeed: $("sSpeed"), sEta: $("sEta"), sFiles: $("sFiles"),
+};
+
+/* ============================================================== state */
+
+/** Held in memory only, never stored. */
+const creds = { name: "", passcode: "" };
+
+/** @type {Array<Object>} one entry per chosen file, in the order shown */
+const items = [];
+const seen = new Set();          // name|size|lastModified, so a re-drop is ignored
+const dirty = new Set();         // items whose row needs repainting
+
+let running = false;
+let paused = false;
+let committed = 0;               // bytes Drive has acknowledged, across all files
+let totalBytes = 0;
+let doneCount = 0;
+let failCount = 0;
+let folderName = "";
+let samples = [];
+let started = 0;
+
+const STATUS_TEXT = {
+  queued: "Waiting",
+  starting: "Starting",
+  uploading: "Uploading",
+  retrying: "Retrying",
+  offline: "No connection",
+  paused: "Paused",
+  done: "Done",
+  failed: "Failed",
+};
+
+/* ============================================================== formatting */
+
+function fmtBytes(n) {
+  if (!isFinite(n)) return "0 B";
+  if (n < 1024) return Math.round(n) + " B";
+  const u = ["KB", "MB", "GB", "TB"];
+  let i = -1, v = n;
+  do { v /= 1024; i++; } while (v >= 1024 && i < u.length - 1);
+  return (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2)) + " " + u[i];
+}
+
+function fmtRate(bytesPerSec) {
+  if (!bytesPerSec || !isFinite(bytesPerSec)) return "0 B/s";
+  return fmtBytes(bytesPerSec) + "/s";
+}
+
+function fmtTime(sec) {
+  if (!isFinite(sec) || sec < 0) return "0s";
+  if (sec < 60) return Math.max(1, Math.round(sec)) + "s";
+  const m = Math.floor(sec / 60), s = Math.round(sec % 60);
+  if (m < 60) return m + "m " + String(s).padStart(2, "0") + "s";
+  const h = Math.floor(m / 60);
+  return h + "h " + String(m % 60).padStart(2, "0") + "m";
+}
+
+function pct(done, total) {
+  if (!total) return 0;
+  return Math.min(100, (done / total) * 100);
+}
+
+function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
+
+/* ============================================================== the gate */
+
+function openGate(message) {
+  el.gateError.classList.toggle("on", !!message);
+  el.gateError.textContent = message || "";
+  el.gateGo.disabled = false;
+  el.gateGo.textContent = "Continue";
+  if (!el.gate.open) el.gate.showModal();
+  (creds.name ? el.passcode : el.uploader).focus();
+}
+
+// The dialog is the way in, so Escape must not dismiss it.
+el.gate.addEventListener("cancel", (e) => e.preventDefault());
+
+el.gateForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const name = el.uploader.value.trim();
+  const code = el.passcode.value;
+  if (!name) { openGate("Please enter your name."); el.uploader.focus(); return; }
+  if (!code) { openGate("Please enter the passcode."); el.passcode.focus(); return; }
+
+  if (CONFIG.WEB_APP_URL.indexOf("PASTE") !== -1) {
+    openGate("This page is not finished being set up: the web app URL is missing.");
+    return;
+  }
+
+  el.gateGo.disabled = true;
+  el.gateGo.textContent = "Checking";
+  el.gateError.classList.remove("on");
+
+  try {
+    await callScript({ action: "check", passcode: code });
+  } catch (err) {
+    openGate(err.message);
+    if (err.code === "BAD_PASSCODE") { el.passcode.value = ""; el.passcode.focus(); }
+    return;
+  }
+
+  creds.name = name;
+  creds.passcode = code;
+  el.who.textContent = name;
+  el.gate.close();
+  el.app.classList.add("on");
+});
+
+el.changeWho.addEventListener("click", () => {
+  if (running) {
+    setBanner(el.errBanner, "Uploads are running. Pause them before changing who you are.");
+    return;
+  }
+  openGate("");
+});
+
+/* ============================================================== choosing files */
+
+el.pickFiles.addEventListener("click", () => el.fileInput.click());
+el.pickFolder.addEventListener("click", () => el.dirInput.click());
+
+el.fileInput.addEventListener("change", () => {
+  addFiles(Array.from(el.fileInput.files));
+  el.fileInput.value = "";
+});
+el.dirInput.addEventListener("change", () => {
+  addFiles(Array.from(el.dirInput.files));
+  el.dirInput.value = "";
+});
+
+["dragenter", "dragover"].forEach((t) =>
+  el.drop.addEventListener(t, (e) => { e.preventDefault(); el.drop.classList.add("over"); })
+);
+["dragleave", "drop"].forEach((t) =>
+  el.drop.addEventListener(t, (e) => { e.preventDefault(); el.drop.classList.remove("over"); })
+);
+
+el.drop.addEventListener("drop", async (e) => {
+  e.preventDefault();
+  const dt = e.dataTransfer;
+  if (!dt) return;
+
+  // A dropped folder only gives up its contents through the entry API.
+  const entries = [];
+  if (dt.items && dt.items.length) {
+    for (const it of dt.items) {
+      const entry = it.webkitGetAsEntry && it.webkitGetAsEntry();
+      if (entry) entries.push(entry);
+    }
+  }
+  if (entries.length) {
+    const busy = !el.netBanner.classList.contains("on");
+    if (busy) setBanner(el.netBanner, "Reading the folder.");
+    try {
+      addFiles(await collectEntries(entries));
+    } finally {
+      if (busy) clearBanner(el.netBanner);
+    }
+  } else if (dt.files && dt.files.length) {
+    addFiles(Array.from(dt.files));
+  }
+});
+
+/** Walks dropped directory entries breadth first and returns their files. */
+async function collectEntries(roots) {
+  const out = [];
+  const queue = roots.slice();
+  while (queue.length) {
+    const entry = queue.shift();
+    if (entry.isFile) {
+      const f = await new Promise((res) => entry.file(res, () => res(null)));
+      if (f) out.push(f);
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      // readEntries hands back about 100 at a time; keep asking until it is empty.
+      for (;;) {
+        const batch = await new Promise((res) => reader.readEntries(res, () => res([])));
+        if (!batch.length) break;
+        queue.push.apply(queue, batch);
+      }
+    }
+  }
+  return out;
+}
+
+function addFiles(files) {
+  const fresh = [];
+  for (const f of files) {
+    const key = f.name + "|" + f.size + "|" + (f.lastModified || 0);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const item = {
+      id: items.length,
+      file: f,
+      name: f.name,
+      size: f.size,
+      sent: 0,          // bytes Drive confirmed for this file
+      inflight: 0,      // bytes of the current chunk sent but not yet confirmed
+      status: "queued",
+      error: "",
+      sessionUrl: "",
+      attempts: 0,
+      restarts: 0,
+      speed: 0,
+      lastSample: null,
+      row: null,
+    };
+    items.push(item);
+    fresh.push(item);
+    totalBytes += f.size;
+  }
+  if (!fresh.length) { refreshQueueInfo(); return; }
+
+  appendRows(fresh);
+  el.listPanel.classList.add("on");
+  refreshQueueInfo();
+  el.start.disabled = running || !items.some((i) => i.status === "queued");
+  if (running) schedule();   // anything added mid run joins the queue
+}
+
+function refreshQueueInfo() {
+  const queued = items.filter((i) => i.status === "queued").length;
+  const bits = [];
+  if (items.length) bits.push(plural(items.length, "file") + ", " + fmtBytes(totalBytes));
+  if (queued && running) bits.push(queued + " waiting");
+  el.queueInfo.textContent = bits.join("  \u00b7  ");
+}
+
+/* ============================================================== rows */
+
+/** Rows are built in slices so dropping 600 files never freezes the page. */
+function appendRows(list) {
+  let i = 0;
+  const step = () => {
+    const frag = document.createDocumentFragment();
+    const end = Math.min(i + 120, list.length);
+    for (; i < end; i++) frag.appendChild(buildRow(list[i]));
+    el.list.appendChild(frag);
+    if (i < list.length) requestAnimationFrame(step);
+  };
+  step();
+}
+
+function buildRow(item) {
+  const row = document.createElement("div");
+  row.className = "row";
+
+  const idx = document.createElement("div");
+  idx.className = "idx";
+  idx.textContent = String(item.id + 1);
+
+  const nm = document.createElement("div");
+  nm.className = "nm";
+  nm.textContent = item.name;
+  nm.title = item.name;
+
+  const sz = document.createElement("div");
+  sz.className = "sz";
+  sz.textContent = fmtBytes(item.size);
+
+  const barcell = document.createElement("div");
+  barcell.className = "barcell";
+  const bar = document.createElement("div");
+  bar.className = "bar";
+  const fill = document.createElement("i");
+  bar.appendChild(fill);
+  barcell.appendChild(bar);
+
+  const pc = document.createElement("div");
+  pc.className = "pc";
+  pc.textContent = "0%";
+
+  const sp = document.createElement("div");
+  sp.className = "sp";
+
+  const st = document.createElement("div");
+  st.className = "st";
+  st.textContent = STATUS_TEXT.queued;
+
+  row.append(idx, nm, sz, barcell, pc, sp, st);
+  item.row = { row, bar, fill, pc, sp, st };
+  return row;
+}
+
+function markDirty(item) { dirty.add(item); }
+
+function paintRow(item) {
+  const r = item.row;
+  if (!r) return;
+  const shown = Math.min(item.size, item.sent + item.inflight);
+  const p = item.status === "done" ? 100 : pct(shown, item.size || 1);
+
+  r.fill.style.transform = "scaleX(" + (p / 100).toFixed(4) + ")";
+  r.pc.textContent = Math.floor(p) + "%";
+  r.sp.textContent = item.status === "uploading" ? fmtRate(item.speed) : "";
+
+  r.st.textContent = item.status === "failed" && item.error
+    ? item.error
+    : STATUS_TEXT[item.status] || item.status;
+  r.st.title = item.error || "";
+
+  r.bar.classList.toggle("done", item.status === "done");
+  r.bar.classList.toggle("bad", item.status === "failed");
+  r.row.className = "row" +
+    (item.status === "done" ? " is-done" :
+     item.status === "failed" ? " is-fail" :
+     item.status === "uploading" ? " is-up" :
+     (item.status === "offline" || item.status === "retrying" || item.status === "paused") ? " is-wait" : "");
+}
+
+/* ============================================================== the paint loop */
+
+let ticking = false;
+
+function startTicking() {
+  if (ticking) return;
+  ticking = true;
+  tick();
+}
+
+function tick() {
+  if (!ticking) return;
+
+  const now = performance.now();
+  let inflight = 0;
+  for (const item of items) inflight += item.inflight;
+  const shownBytes = committed + inflight;
+
+  // Sliding window speed: compare with the oldest sample still inside the window.
+  samples.push({ t: now, bytes: shownBytes });
+  while (samples.length > 2 && now - samples[0].t > CONFIG.SPEED_WINDOW_MS) samples.shift();
+  const first = samples[0];
+  const dt = (now - first.t) / 1000;
+  const speed = dt > 0.75 ? Math.max(0, (shownBytes - first.bytes) / dt) : 0;
+
+  // Per file speed, from that file's own previous reading.
+  for (const item of items) {
+    if (item.status !== "uploading") {
+      if (item.speed) { item.speed = 0; markDirty(item); }
+      continue;
+    }
+    const at = item.sent + item.inflight;
+    if (item.lastSample) {
+      const d = (now - item.lastSample.t) / 1000;
+      if (d >= 0.5) {
+        const inst = Math.max(0, (at - item.lastSample.bytes) / d);
+        item.speed = item.speed ? item.speed * 0.6 + inst * 0.4 : inst;
+        item.lastSample = { t: now, bytes: at };
+      }
+    } else {
+      item.lastSample = { t: now, bytes: at };
+    }
+    markDirty(item);
+  }
+
+  for (const item of dirty) paintRow(item);
+  dirty.clear();
+
+  paintSummary(shownBytes, speed);
+  setTimeout(() => requestAnimationFrame(tick), 180);
+}
+
+function paintSummary(shownBytes, speed) {
+  const p = pct(shownBytes, totalBytes);
+  el.overallBarFill.style.transform = "scaleX(" + (p / 100).toFixed(4) + ")";
+  el.overallBar.classList.toggle("done", items.length > 0 && doneCount === items.length);
+
+  el.sPct.textContent = (p >= 99.95 ? 100 : p.toFixed(1)) + "%";
+  el.sSent.innerHTML = fmtBytes(shownBytes) + " <small>of " + fmtBytes(totalBytes) + "</small>";
+  el.sSpeed.textContent = running && !paused ? fmtRate(speed) : "0 B/s";
+
+  const remaining = Math.max(0, totalBytes - shownBytes);
+  el.sEta.textContent = (running && !paused && speed > 1024) ? fmtTime(remaining / speed) : "0s";
+
+  el.sFiles.innerHTML = doneCount + " <small>of " + items.length +
+    (failCount ? ", " + failCount + " failed" : "") + "</small>";
+
+  const active = items.filter((i) => i.status === "uploading" || i.status === "starting").length;
+  const waiting = items.filter((i) => i.status === "queued").length;
+  el.overallLeft.textContent = running
+    ? (paused ? "Paused" : active + " uploading, " + waiting + " waiting")
+    : (items.length && doneCount === items.length ? "Finished" : "Ready");
+  el.overallRight.textContent = started && running
+    ? "Elapsed " + fmtTime((performance.now() - started) / 1000)
+    : "";
+}
+
+/* ============================================================== banners */
+
+function setBanner(node, text) { node.textContent = text; node.classList.add("on"); }
+function clearBanner(node) { node.classList.remove("on"); node.textContent = ""; }
+
+/* ============================================================== network gate */
+
+let onlineWaiters = [];
+
+window.addEventListener("offline", () => {
+  setBanner(el.netBanner, "Connection lost. Uploads are paused and will continue from where they stopped. Keep this tab open.");
+});
+window.addEventListener("online", () => {
+  clearBanner(el.netBanner);
+  const waiting = onlineWaiters;
+  onlineWaiters = [];
+  waiting.forEach((fn) => fn());
+});
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Resolves once the browser is online again and nothing is paused. */
+async function gate(item) {
+  while (!navigator.onLine || paused) {
+    const want = !navigator.onLine ? "offline" : "paused";
+    if (item && item.status !== want) { item.status = want; markDirty(item); }
+    if (!navigator.onLine) {
+      await Promise.race([new Promise((r) => onlineWaiters.push(r)), sleep(2000)]);
+    } else {
+      await sleep(300);
+    }
+  }
+}
+
+/* ============================================================== talking to the script */
+
+async function callScript(payload) {
+  // text/plain keeps this a simple request, so the browser skips the preflight
+  // that an Apps Script web app cannot answer.
+  const res = await fetch(CONFIG.WEB_APP_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload),
+    redirect: "follow",
+  });
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (err) {
+    throw new Error("The server replied with something unexpected. Check the web app URL, and that it is deployed with access set to Anyone.");
+  }
+  if (!data.ok) throw Object.assign(new Error(data.error || "Refused."), { code: data.code });
+  return data;
+}
+
+async function startSession(item) {
+  const data = await callScript({
+    action: "start",
+    passcode: creds.passcode,
+    uploaderName: creds.name,
+    fileName: item.name,
+    mimeType: item.file.type || "",
+    size: item.size,
+    origin: location.origin,
+  });
+  if (data.folderName) folderName = data.folderName;
+  return data.sessionUrl;
+}
+
+/* ============================================================== chunk transfer */
+
+function httpErr(status, body) {
+  return Object.assign(new Error("HTTP " + status), { http: status, body: body || "" });
+}
+function netErr(what) {
+  return Object.assign(new Error(what || "network"), { net: true });
+}
+
+/** Parses "bytes=0-1048575" and returns the last byte Drive is holding. */
+function parseRangeEnd(range) {
+  if (!range) return null;
+  const m = /bytes=(\d+)-(\d+)/.exec(range);
+  return m ? Number(m[2]) : null;
+}
+
+/** PUTs one slice. Resolves {done} or {next}, the offset to continue from. */
+function putChunk(item, start, end) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    item.xhr = xhr;
+    xhr.open("PUT", item.sessionUrl, true);
+    xhr.timeout = CONFIG.CHUNK_TIMEOUT_MS;
+    if (item.size > 0) {
+      xhr.setRequestHeader("Content-Range", "bytes " + start + "-" + (end - 1) + "/" + item.size);
+    }
+
+    xhr.upload.onprogress = (ev) => { item.inflight = ev.loaded; };
+
+    xhr.onload = () => {
+      item.xhr = null;
+      const s = xhr.status;
+      if (s === 200 || s === 201) { resolve({ done: true }); return; }
+      if (s === 308) {
+        // The Range header is authoritative. Without it, trust what we sent.
+        const kept = parseRangeEnd(xhr.getResponseHeader("Range"));
+        resolve({ done: false, next: kept === null ? end : kept + 1 });
+        return;
+      }
+      reject(httpErr(s, xhr.responseText));
+    };
+    xhr.onerror = () => { item.xhr = null; reject(netErr("connection interrupted")); };
+    xhr.ontimeout = () => { item.xhr = null; reject(netErr("timed out")); };
+    xhr.onabort = () => { item.xhr = null; reject(netErr("stopped")); };
+
+    xhr.send(item.size > 0 ? item.file.slice(start, end) : new Blob([]));
+  });
+}
+
+/** Asks Drive how much of the file it already holds. */
+function queryOffset(item) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", item.sessionUrl, true);
+    xhr.timeout = 60000;
+    xhr.setRequestHeader("Content-Range", "bytes */" + item.size);
+    xhr.onload = () => {
+      const s = xhr.status;
+      if (s === 200 || s === 201) { resolve({ done: true }); return; }
+      if (s === 308) {
+        const kept = parseRangeEnd(xhr.getResponseHeader("Range"));
+        resolve({ done: false, offset: kept === null ? null : kept + 1 });
+        return;
+      }
+      reject(httpErr(s, xhr.responseText));
+    };
+    xhr.onerror = () => reject(netErr("connection interrupted"));
+    xhr.ontimeout = () => reject(netErr("timed out"));
+    xhr.send(null);
+  });
+}
+
+function addCommitted(item, newSent) {
+  committed += newSent - item.sent;
+  item.sent = newSent;
+}
+
+function backoff(attempt) {
+  const base = Math.min(30000, 1000 * Math.pow(2, attempt - 1));
+  return Math.round(base * (0.75 + Math.random() * 0.5));
+}
+
+/* ============================================================== one file */
+
+async function uploadOne(item) {
+  item.error = "";
+  item.attempts = 0;
+
+  for (;;) {
+    await gate(item);
+    try {
+      if (!item.sessionUrl) {
+        item.status = "starting"; markDirty(item);
+        item.sessionUrl = await startSession(item);
+      }
+      break;
+    } catch (err) {
+      if (err.code === "BAD_PASSCODE" || err.code === "CLOSED" ||
+          err.code === "NOT_CONFIGURED" || err.code === "BAD_ORIGIN") {
+        throw err;   // retrying will not help
+      }
+      item.attempts++;
+      if (item.attempts >= CONFIG.MAX_CHUNK_ATTEMPTS) {
+        return failItem(item, "Could not start: " + err.message);
+      }
+      item.status = "retrying"; markDirty(item);
+      await sleep(backoff(item.attempts));
+    }
+  }
+
+  item.attempts = 0;
+  item.status = "uploading";
+  item.lastSample = null;
+  markDirty(item);
+
+  while (item.sent < item.size || item.size === 0) {
+    await gate(item);
+    item.status = "uploading"; markDirty(item);
+
+    const start = item.sent;
+    const end = Math.min(start + CONFIG.CHUNK_SIZE, item.size);
+
+    try {
+      const res = await putChunk(item, start, end);
+      item.inflight = 0;
+      item.attempts = 0;
+      if (res.done) { addCommitted(item, item.size); break; }
+      addCommitted(item, Math.max(start, res.next));
+      if (item.size === 0) break;
+      markDirty(item);
+      continue;
+    } catch (err) {
+      item.inflight = 0;
+
+      // Drive no longer knows this session: begin the file again with a new one.
+      if (err.http === 404 || err.http === 410) {
+        if (item.restarts >= CONFIG.MAX_SESSION_RESTARTS) {
+          return failItem(item, "Upload session expired repeatedly");
+        }
+        item.restarts++;
+        item.sessionUrl = "";
+        addCommitted(item, 0);
+        item.status = "retrying"; markDirty(item);
+        await sleep(backoff(item.restarts));
+        await gate(item);
+        try {
+          item.sessionUrl = await startSession(item);
+        } catch (e2) {
+          return failItem(item, "Could not restart: " + e2.message);
+        }
+        continue;
+      }
+
+      // Any other 4xx is a real refusal, so repeating it changes nothing.
+      if (err.http && err.http >= 400 && err.http < 500 && err.http !== 408 && err.http !== 429) {
+        return failItem(item, "Drive refused this file (HTTP " + err.http + ")");
+      }
+
+      item.attempts++;
+      if (item.attempts >= CONFIG.MAX_CHUNK_ATTEMPTS) {
+        return failItem(item, err.net ? "Connection kept dropping" : "Upload error (" + err.message + ")");
+      }
+
+      item.status = "retrying"; markDirty(item);
+      await sleep(backoff(item.attempts));
+      await gate(item);
+
+      // Take the resume point from Drive rather than guessing at it.
+      try {
+        const q = await queryOffset(item);
+        if (q.done) { addCommitted(item, item.size); break; }
+        if (q.offset !== null) addCommitted(item, q.offset);
+      } catch (e) {
+        // Could not ask. The next attempt resends from the last confirmed offset.
+      }
+    }
+  }
+
+  item.inflight = 0;
+  item.status = "done";
+  item.speed = 0;
+  doneCount++;
+  markDirty(item);
+  refreshQueueInfo();
+}
+
+function failItem(item, message) {
+  item.status = "failed";
+  item.error = message;
+  item.inflight = 0;
+  item.speed = 0;
+  failCount++;
+  markDirty(item);
+  refreshQueueInfo();
+}
+
+/* ============================================================== the scheduler */
+
+let activeWorkers = 0;
+let fatal = null;
+
+function nextQueued() {
+  for (const item of items) if (item.status === "queued") return item;
+  return null;
+}
+
+function schedule() {
+  while (activeWorkers < CONFIG.CONCURRENCY && !fatal && nextQueued()) {
+    activeWorkers++;
+    worker().then(() => {
+      activeWorkers--;
+      if (!activeWorkers) finishRun();
+      else schedule();
+    });
+  }
+}
+
+async function worker() {
+  for (;;) {
+    if (fatal) return;
+    const item = nextQueued();
+    if (!item) return;
+    item.status = "starting";
+    markDirty(item);
+    try {
+      await uploadOne(item);
+    } catch (err) {
+      // A wrong passcode or a closed drop stops the batch, not just this file.
+      failItem(item, err.message);
+      fatal = err;
+      return;
+    }
+  }
+}
+
+function finishRun() {
+  running = false;
+  paused = false;
+  el.pause.hidden = true;
+  el.pause.textContent = "Pause";
+  el.start.textContent = "Start upload";
+
+  if (fatal) {
+    for (const item of items) {
+      if (item.status === "starting") { item.status = "queued"; markDirty(item); }
+    }
+    const err = fatal;
+    fatal = null;
+    ticking = false;
+    for (const item of items) paintRow(item);
+    paintSummary(committed, 0);
+    el.start.disabled = false;
+    el.retry.hidden = !items.some((i) => i.status === "failed");
+    refreshQueueInfo();
+    if (err.code === "BAD_PASSCODE") {
+      openGate("The passcode stopped working. Enter it again to carry on.");
+    } else {
+      setBanner(el.errBanner, err.message + " The remaining files were not uploaded.");
+    }
+    return;
+  }
+
+  if (nextQueued()) { running = true; el.pause.hidden = false; schedule(); return; }
+
+  ticking = false;
+  for (const item of items) paintRow(item);
+  paintSummary(committed, 0);
+
+  const failed = items.filter((i) => i.status === "failed");
+  if (failed.length) {
+    el.retry.hidden = false;
+    el.start.disabled = true;
+    setBanner(el.errBanner, plural(failed.length, "file") +
+      " did not finish. Press Retry failed, and each one continues from where it stopped.");
+  } else {
+    clearBanner(el.errBanner);
+    el.retry.hidden = true;
+    el.start.disabled = true;
+    setBanner(el.okBanner, "All done. " + plural(doneCount, "file") +
+      " (" + fmtBytes(committed) + ") are in Drive" +
+      (folderName ? ", in " + folderName + "." : "."));
+  }
+  refreshQueueInfo();
+}
+
+/* ============================================================== controls */
+
+function beginRun() {
+  el.summary.classList.add("on");
+  el.pause.hidden = false;
+  el.pause.textContent = "Pause";
+  el.retry.hidden = true;
+  el.start.disabled = true;
+  el.start.textContent = "Uploading";
+  running = true;
+  paused = false;
+  fatal = null;
+  started = started || performance.now();
+  samples = [{ t: performance.now(), bytes: committed }];
+  if (!navigator.onLine) {
+    setBanner(el.netBanner, "Waiting for a connection. Uploads will begin on their own.");
+  }
+  startTicking();
+  schedule();
+}
+
+el.start.addEventListener("click", () => {
+  clearBanner(el.errBanner);
+  clearBanner(el.okBanner);
+  if (!items.some((i) => i.status === "queued")) {
+    setBanner(el.errBanner, "Choose some files first.");
+    return;
+  }
+  started = performance.now();
+  beginRun();
+});
+
+el.pause.addEventListener("click", () => {
+  paused = !paused;
+  el.pause.textContent = paused ? "Resume" : "Pause";
+  if (paused) {
+    setBanner(el.netBanner, "Paused. Press Resume to carry on. Nothing already uploaded is lost.");
+  } else {
+    clearBanner(el.netBanner);
+    let inflight = 0;
+    for (const item of items) inflight += item.inflight;
+    samples = [{ t: performance.now(), bytes: committed + inflight }];
+  }
+});
+
+el.retry.addEventListener("click", () => {
+  const failed = items.filter((i) => i.status === "failed");
+  if (!failed.length) return;
+  for (const item of failed) {
+    item.status = "queued";
+    item.error = "";
+    item.attempts = 0;
+    markDirty(item);
+  }
+  failCount = Math.max(0, failCount - failed.length);
+  clearBanner(el.errBanner);
+  clearBanner(el.okBanner);
+  beginRun();
+});
+
+window.addEventListener("beforeunload", (e) => {
+  if (!running) return;
+  e.preventDefault();
+  e.returnValue = "Uploads are still running. Leaving now will stop them.";
+  return e.returnValue;
+});
+
+/* ============================================================== start */
+
+// A passcode in the link (#code=...) saves the photographer typing it.
+if (location.hash) {
+  const m = /(?:^#|&)code=([^&]+)/.exec(location.hash);
+  if (m) {
+    try { el.passcode.value = decodeURIComponent(m[1]); } catch (err) { /* ignore */ }
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+}
+
+openGate("");
+</script>
+</body>
+</html>
